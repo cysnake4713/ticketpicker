@@ -49,7 +49,20 @@
           <root url="jar://$MODULE_DIR$/lib/httpclient-4.2.2.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="file://D:/soft/httpcomponents-client-4.2.2-src/httpcomponents-client-4.2.2/fluent-hc/src/examples" />
+          <root url="file://D:/soft/httpcomponents-client-4.2.2-src/httpcomponents-client-4.2.2/fluent-hc/src/main/java" />
+          <root url="file://D:/soft/httpcomponents-client-4.2.2-src/httpcomponents-client-4.2.2/httpclient/src/examples" />
+          <root url="file://D:/soft/httpcomponents-client-4.2.2-src/httpcomponents-client-4.2.2/httpclient/src/main/java" />
+          <root url="file://D:/soft/httpcomponents-client-4.2.2-src/httpcomponents-client-4.2.2/httpclient/src/test/java" />
+          <root url="file://D:/soft/httpcomponents-client-4.2.2-src/httpcomponents-client-4.2.2/httpclient-benchmark/src/main/java" />
+          <root url="file://D:/soft/httpcomponents-client-4.2.2-src/httpcomponents-client-4.2.2/httpclient-cache/src/main/java" />
+          <root url="file://D:/soft/httpcomponents-client-4.2.2-src/httpcomponents-client-4.2.2/httpclient-cache/src/test/java" />
+          <root url="file://D:/soft/httpcomponents-client-4.2.2-src/httpcomponents-client-4.2.2/httpclient-contrib/src/main/java" />
+          <root url="file://D:/soft/httpcomponents-client-4.2.2-src/httpcomponents-client-4.2.2/httpmime/src/examples" />
+          <root url="file://D:/soft/httpcomponents-client-4.2.2-src/httpcomponents-client-4.2.2/httpmime/src/main/java" />
+          <root url="file://D:/soft/httpcomponents-client-4.2.2-src/httpcomponents-client-4.2.2/httpmime/src/test/java" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">

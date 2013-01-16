@@ -1,9 +1,7 @@
 package com.cysnake.ticket;
 
-import org.apache.http.HttpHost;
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
@@ -59,8 +57,8 @@ public class HttpsUtil {
 // apache HttpClient version >4.2 should use BasicClientConnectionManager
         ClientConnectionManager cm = new BasicClientConnectionManager(schemeRegistry);
         DefaultHttpClient hc = new DefaultHttpClient(cm);
-        HttpHost proxy = new HttpHost("127.0.0.1", 8087);
-        hc.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
+//        HttpHost proxy = new HttpHost("127.0.0.1", 8087);
+//        hc.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
         return hc;
     }
 }

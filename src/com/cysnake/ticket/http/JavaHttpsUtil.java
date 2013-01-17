@@ -1,4 +1,4 @@
-package com.cysnake.ticket;
+package com.cysnake.ticket.http;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ClientConnectionManager;
@@ -24,7 +24,7 @@ import java.security.cert.X509Certificate;
  * Time: 4:43 PM
  * if you have problem here, please contact me: cysnake4713@gmail.com
  */
-public class HttpsUtil {
+public class JavaHttpsUtil {
 
     public static HttpClient getHttpClient() throws NoSuchAlgorithmException, KeyManagementException {
         SSLContext sslContext = SSLContext.getInstance("SSL");

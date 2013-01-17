@@ -1,5 +1,6 @@
 package com.cysnake.ticket
 
+import http.{HttpsUtil, JavaHttpsUtil}
 import java.util.Properties
 import java.io._
 import org.apache.http.client.methods.{HttpGet, HttpPost}

@@ -1,5 +1,9 @@
 package com.cysnake.ticket
 
+import actor.GetCodeActor
+import ui.CodeFrame
+import java.net.URL
+
 /**
  * This code is written by matt.cai and if you want use it, feel free!
  * User: matt.cai
@@ -9,8 +13,10 @@ package com.cysnake.ticket
  */
 object Main {
   def main(args: Array[String]) {
-    Login.getPage("""d:\ticket\head\loginpage.har""")
-//    Login.login1("""d:\ticket\head\loginAction.do.har""")
-//    Login.login("""d:\ticket\head\loginAction.do2.har""")
+    GetCodeActor.getCode( """d:\ticket\head\loginPassCode.do.har""")
+    //    Login.getPage("""d:\ticket\head\loginpage.har""")
+
+    //    Login.login1("""d:\ticket\head\loginAction.do.har""")
+    //    Login.login("""d:\ticket\head\loginAction.do2.har""")
   }
 }

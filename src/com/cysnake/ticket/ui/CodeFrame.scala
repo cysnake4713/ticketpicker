@@ -15,7 +15,7 @@ import com.cysnake.ticket.actor.ResultCode
  * Time: 9:50 AM
  * if you have problem here, please contact me: cysnake4713@gmail.com
  */
-object CodeFrame extends SimpleSwingApplication {
+class CodeFrame extends SimpleSwingApplication {
   var image: Image = null
   var codeActor: Actor = null
 
@@ -36,8 +36,8 @@ object CodeFrame extends SimpleSwingApplication {
     contents = new FlowPanel {
       contents += imageLabel
       contents += inputText
-      focusable = true
-      requestFocus
+//      focusable = true
+      //      requestFocus
     }
 
     listenTo(inputText)
@@ -46,7 +46,7 @@ object CodeFrame extends SimpleSwingApplication {
       case EditDone(`inputText`) => {
         println("editDone")
         if (codeActor != null) {
-          codeActor.sender ! inputText.text
+          codeActor.self ! ResultCode(inputText.text)
         }
         closeOperation()
       }
@@ -55,7 +55,7 @@ object CodeFrame extends SimpleSwingApplication {
   }
 
   def setImage(is: InputStream, actor: Actor) {
-    //    image = ImageIO.read(is)
+    image = ImageIO.read(is)
     codeActor = actor
   }
 }

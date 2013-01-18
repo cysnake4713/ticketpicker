@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, Props, Actor}
 import com.cysnake.har.HarEntity
 import org.apache.http.client.methods.HttpGet
 import com.cysnake.ticket.ui.CodeFrame
-import com.cysnake.ticket.http.{JavaHttpsUtil, HttpsUtil}
+import com.cysnake.ticket.http.HttpsUtil
 import org.apache.http.util.EntityUtils
 import org.apache.http.client.HttpClient
 import org.apache.http.HttpResponse
@@ -71,7 +71,7 @@ class GetCodeActor extends Actor {
     case ResultCode(codeText: String) => {
       println("your input is: " + codeText)
       context.actorFor("..") ! GetCodeRuselt(codeText)
-//      context.stop(self)
+      //      context.stop(self)
       //      val loginActor = context.actorOf(Props[LoginActor], "loginActor")
       //      loginActor ! LoginFirst(codeText, httpClient)
     }

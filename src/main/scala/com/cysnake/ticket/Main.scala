@@ -16,14 +16,13 @@ import akka.dispatch.Await
  */
 
 
-
-object Main{
+object Main {
   def main(args: Array[String]) {
     println("start")
     val system = ActorSystem("MySystem")
     val mainActor = system.actorOf(Props[MainActor], name = "MainActor")
-
-    mainActor ! StartMain
+    println(System.getProperty("user.dir"))
+    //    mainActor ! StartMain
     //    Login.getPage("""d:\ticket\head\loginpage.har""")
 
     //    Login.login1("""d:\ticket\head\loginAction.do.har""")

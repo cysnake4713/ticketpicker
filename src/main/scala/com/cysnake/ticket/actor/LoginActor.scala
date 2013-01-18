@@ -6,7 +6,7 @@ import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.json.{JSONTokener, JSONObject}
 import java.io.InputStreamReader
 import org.apache.http.util.EntityUtils
-import com.cysnake.ticket.http.{JavaHttpsUtil, HttpsUtil}
+import com.cysnake.ticket.http.HttpsUtil
 import org.apache.http.client.HttpClient
 import com.cysnake.ticket.ui.CodeFrame
 import org.apache.http.HttpResponse

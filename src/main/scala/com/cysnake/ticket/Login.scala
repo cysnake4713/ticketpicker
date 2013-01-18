@@ -1,8 +1,8 @@
 package com.cysnake.ticket
 
 import com.cysnake.har.HarEntity
-import http.{HttpsUtil, JavaHttpsUtil}
-import org.apache.http.{NameValuePair}
+import http.HttpsUtil
+import org.apache.http.NameValuePair
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.util.EntityUtils
 import java.io.InputStreamReader
@@ -24,24 +24,24 @@ object Login {
   var rand: String = ""
 
   def getPassCode(path: String) {
-//    val passCodeActor = actor {
-//      receive {
-//        case msg => {
-//          println("get msg: " + msg)
-//          EntityUtils.consume(entity)
-//          httpGet.releaseConnection()
-//          println("release")
-//        }
-//      }
-//      val har = new HarEntity(path)
-//      val httpGet = har.generateHttpRequest(httpClient).asInstanceOf[HttpGet]
-//      val response = httpClient.execute(httpGet)
-//      println("status: " + response.getStatusLine)
-//      val entity = response.getEntity
-//      CodeFrame.setImage(entity.getContent, passCodeActor)
-//      CodeFrame.startup(Array.empty)
-//
-//    }
+    //    val passCodeActor = actor {
+    //      receive {
+    //        case msg => {
+    //          println("get msg: " + msg)
+    //          EntityUtils.consume(entity)
+    //          httpGet.releaseConnection()
+    //          println("release")
+    //        }
+    //      }
+    //      val har = new HarEntity(path)
+    //      val httpGet = har.generateHttpRequest(httpClient).asInstanceOf[HttpGet]
+    //      val response = httpClient.execute(httpGet)
+    //      println("status: " + response.getStatusLine)
+    //      val entity = response.getEntity
+    //      CodeFrame.setImage(entity.getContent, passCodeActor)
+    //      CodeFrame.startup(Array.empty)
+    //
+    //    }
   }
 
   //  def getPage(path: String) {
@@ -118,3 +118,4 @@ object Login {
     json.get("loginRand").asInstanceOf[String]
   }
 }
+

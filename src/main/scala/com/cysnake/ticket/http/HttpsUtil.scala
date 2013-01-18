@@ -1,5 +1,6 @@
 package com.cysnake.ticket.http
 
+import com.cysnake.http.JavaHttpsUtil
 
 
 /**
@@ -15,3 +16,4 @@ object HttpsUtil {
   def getHttpClient = httpsUtil
 
 }
+

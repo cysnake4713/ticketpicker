@@ -1,4 +1,4 @@
-package com.cysnake.ticket.http;
+package com.cysnake.http;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ClientConnectionManager;
@@ -87,3 +87,4 @@ public class JavaHttpsUtil {
         return hc;
     }
 }
+

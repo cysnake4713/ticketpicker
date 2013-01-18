@@ -1,6 +1,5 @@
 package com.cysnake.ticket.http
 
-import org.apache.http.client.HttpClient
 
 
 /**
@@ -13,7 +12,6 @@ import org.apache.http.client.HttpClient
 object HttpsUtil {
   private val httpsUtil = JavaHttpsUtil.getHttpClient
 
-  def getHttpClient: HttpClient = {
-    httpsUtil
-  }
+  def getHttpClient = httpsUtil
+
 }

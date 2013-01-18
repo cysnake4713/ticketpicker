@@ -19,9 +19,9 @@ import com.cysnake.ticket.ui.CodeFrame
  */
 class LoginActor extends Actor {
   def receive = {
-    case LoginFirst(code) => {
+    case LoginFirst(code,httpClient) => {
       println("login now")
-      val httpClient = HttpsUtil.getHttpClient
+//      val httpClient = HttpsUtil.getHttpClient
 
       val path = """d:\ticket\head\loginPassCode.do.har"""
       val har = new HarEntity(path)
@@ -56,4 +56,4 @@ class LoginActor extends Actor {
 }
 
 
-case class LoginFirst(code: String)
+case class LoginFirst(code: String, httpClient:HttpClient)

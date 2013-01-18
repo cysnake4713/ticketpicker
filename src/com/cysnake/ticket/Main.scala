@@ -24,12 +24,14 @@ object ActorBuilder {
   def start = {
 
     val getCodeActor = system.actorOf(Props[GetCodeActor], name = "getCodeActor")
+    getCodeActor ! GetCode
   }
 }
 
 
 object Main {
   def main(args: Array[String]) {
+    println("start")
     ActorBuilder.start
     //    Login.getPage("""d:\ticket\head\loginpage.har""")
 

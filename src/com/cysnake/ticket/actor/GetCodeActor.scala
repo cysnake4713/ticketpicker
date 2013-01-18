@@ -4,7 +4,7 @@ import akka.actor.{Props, Actor}
 import com.cysnake.har.HarEntity
 import org.apache.http.client.methods.HttpGet
 import com.cysnake.ticket.ui.CodeFrame
-import com.cysnake.ticket.http.HttpsUtil
+import com.cysnake.ticket.http.{JavaHttpsUtil, HttpsUtil}
 import org.apache.http.util.EntityUtils
 
 /**
@@ -26,24 +26,36 @@ class GetCodeActor extends Actor {
     case GetCode => {
       val path = """d:\ticket\head\loginPassCode.do.har"""
       val har = new HarEntity(path)
+
       val httpGet = har.generateHttpRequest(httpClient).asInstanceOf[HttpGet]
       val response = httpClient.execute(httpGet)
       println("status: " + response.getStatusLine)
       val entity = response.getEntity
       val codeFrame = new CodeFrame
-      val  stream = entity.getContent
+      val stream = entity.getContent
       codeFrame.setImage(entity.getContent, this)
       codeFrame.startup(Array.empty)
       EntityUtils.consume(entity)
       stream.close()
       httpGet.abort()
-      //      httpGet.releaseConnection()
+
+      httpGet.releaseConnection()
+
+      //      val httpclient2 = HttpsUtil.getHttpClient
+      //      val path1 = """d:\ticket\head\loginPassCode.do.har"""
+      //
+      //      val har1 = new HarEntity(path1)
+      //      val httpGet1 = har1.generateHttpRequest(httpclient2).asInstanceOf[HttpGet]
+      //      val response1 = httpclient2.execute(httpGet1)
+      //      println("status: " + response1.getStatusLine)
+
+
     }
 
     case ResultCode(codeText: String) => {
       println("your input is: " + codeText)
       val loginActor = context.actorOf(Props[LoginActor], "loginActor")
-      loginActor ! LoginFirst(codeText)
+      loginActor ! LoginFirst(codeText, httpClient)
     }
 
 

@@ -58,14 +58,14 @@ class HarEntity {
     version
   }
 
-  def generateHttpRequest(httpClient: HttpClient): HttpRequestBase = {
-    val pattern11 = """.*1.1""".r
+  def generateHttpRequest: HttpRequestBase = {
+//    val pattern11 = """.*1.1""".r
     //TODO
-    getHttpVersion match {
-      case pattern11(test) => httpClient.getParams.setParameter(CoreProtocolPNames.PROTOCOL_VERSION,
-        HttpVersion.HTTP_1_1)
-      case _ => println("httpversion no match, use default!")
-    }
+//    getHttpVersion match {
+//      case pattern11(test) => httpClient.getParams.setParameter(CoreProtocolPNames.PROTOCOL_VERSION,
+//        HttpVersion.HTTP_1_1)
+//      case _ => println("httpversion no match, use default!")
+//    }
 
 
     val httpRequest = getMethod.toUpperCase match {

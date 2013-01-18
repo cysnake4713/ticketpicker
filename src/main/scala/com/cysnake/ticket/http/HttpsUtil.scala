@@ -10,7 +10,7 @@ package com.cysnake.ticket.http
  * if you have problem here, please contact me: cysnake4713@gmail.com
  */
 object HttpsUtil {
-  private val httpsUtil = JavaHttpsUtil.getHttpClient
+  private val httpsUtil = JavaHttpsUtil.getNewHttpClient
 
   def getHttpClient = httpsUtil
 

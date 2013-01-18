@@ -1,6 +1,6 @@
 package com.cysnake.ticket.ui
 
-import swing._
+import scala.swing._
 import event.{EditDone, Key, KeyPressed}
 import java.io.InputStream
 import javax.swing.ImageIcon

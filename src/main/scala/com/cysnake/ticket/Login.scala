@@ -65,7 +65,7 @@ object Login {
 
   def login1(path: String) {
     val har = new HarEntity(path)
-    val httpPost = har.generateHttpRequest(httpClient).asInstanceOf[HttpPost]
+    val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
 
     val response = httpClient.execute(httpPost)
 
@@ -85,7 +85,7 @@ object Login {
   def login(path: String) = {
 
     val har = new HarEntity(path)
-    val httpPost = har.generateHttpRequest(httpClient).asInstanceOf[HttpPost]
+    val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
 
     //___________________________________________
     val formParams: ArrayList[NameValuePair] = new ArrayList[NameValuePair]

@@ -1,6 +1,7 @@
-.idea
+.idea*
 out
+project/project
+project/target
 target
-project
 *~
-lib/lib
+ticketpicker.iml

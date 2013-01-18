@@ -1,6 +1,6 @@
 package com.cysnake.ticket
 
-import actor.{GetCode, GetCodeActor}
+import actor.{StartMain, MainActor, GetCode, GetCodeActor}
 import ui.CodeFrame
 import java.net.URL
 import akka.util.Timeout
@@ -15,24 +15,15 @@ import akka.dispatch.Await
  * if you have problem here, please contact me: cysnake4713@gmail.com
  */
 
-object ActorBuilder {
-  //  implicit val timeout = Timeout(600)
-  var result: String = null
-  val system = ActorSystem("MySystem")
 
 
-  def start = {
-
-    val getCodeActor = system.actorOf(Props[GetCodeActor], name = "getCodeActor")
-    getCodeActor ! GetCode
-  }
-}
-
-
-object Main {
+object Main{
   def main(args: Array[String]) {
     println("start")
-    ActorBuilder.start
+    val system = ActorSystem("MySystem")
+    val mainActor = system.actorOf(Props[MainActor], name = "MainActor")
+
+    mainActor ! StartMain
     //    Login.getPage("""d:\ticket\head\loginpage.har""")
 
     //    Login.login1("""d:\ticket\head\loginAction.do.har""")

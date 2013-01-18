@@ -1,7 +1,7 @@
 package com.cysnake.ticket.actor
 
-import akka.actor.{Props, Actor}
-import com.cysnake.ticket.http.HttpsUtil
+import akka.actor.{Props, ReceiveTimeout, Actor}
+import akka.util.duration._
 
 
 /**
@@ -16,12 +16,13 @@ class MainActor extends Actor {
 
   import context._
 
+  context.setReceiveTimeout(15 seconds)
 
   val loginActor = context.actorOf(Props[LoginActor], name = "loginActor")
   val socketActor = context.actorOf(Props[SocketActor], name = "socketActor")
   val getCodeActor = context.actorOf(Props[GetCodeActor], name = "getCodeActor")
 
-//  override def preStart() {
+  //  override def preStart() {
   //    super.preStart()
   //    println("start")
   //  }
@@ -41,6 +42,8 @@ class MainActor extends Actor {
       println("get code Ruselt")
       loginActor ! LoginFirst(code)
     }
+
+    case ReceiveTimeout => context.system.shutdown()
 
     case _ => println("match error")
 

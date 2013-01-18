@@ -6,6 +6,7 @@ import java.net.URL
 import akka.util.Timeout
 import akka.actor.{Props, ActorSystem}
 import akka.dispatch.Await
+import com.typesafe.config.ConfigFactory
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -22,7 +23,7 @@ object Main {
     val system = ActorSystem("MySystem")
     val mainActor = system.actorOf(Props[MainActor], name = "MainActor")
     println(System.getProperty("user.dir"))
-    //    mainActor ! StartMain
+    mainActor ! StartMain
     //    Login.getPage("""d:\ticket\head\loginpage.har""")
 
     //    Login.login1("""d:\ticket\head\loginAction.do.har""")

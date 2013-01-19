@@ -41,7 +41,7 @@ class GetCodeActor extends Actor {
 
   def receive = {
     case GetCode => {
-      val path = """d:\ticket\head\loginPassCode.do.har"""
+      val path = """file\head\passCodeAction.do.har"""
       val har = new HarEntity(path)
 
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
@@ -54,9 +54,9 @@ class GetCodeActor extends Actor {
 
           println("status: " + response.getStatusLine)
           val entity = response.getEntity
-          val codeFrame = new CodeFrame
+          val codeFrame = new CodeFrame(context)
           val stream = entity.getContent
-          codeFrame.setImage(entity.getContent, this)
+          codeFrame.setImage(entity.getContent)
           codeFrame.startup(Array.empty)
           EntityUtils.consume(entity)
           stream.close()
@@ -82,6 +82,6 @@ class GetCodeActor extends Actor {
 }
 
 
-case class GetCode
+case class GetCode()
 
 case class ResultCode(code: String)

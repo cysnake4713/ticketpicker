@@ -45,7 +45,7 @@ class LoginActor extends Actor {
       //      EntityUtils.consume(entity)
 
 
-      val path = """d:\ticket\head\loginAction.do.har"""
+      val path = """file\head\loginAction.do.har"""
       val har = new HarEntity(path)
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
       val socket = context.actorFor("../socketActor")

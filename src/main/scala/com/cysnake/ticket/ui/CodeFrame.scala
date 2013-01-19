@@ -5,8 +5,8 @@ import event.{EditDone, Key, KeyPressed}
 import java.io.InputStream
 import javax.swing.ImageIcon
 import javax.imageio.ImageIO
-import akka.actor.Actor
 import com.cysnake.ticket.actor.ResultCode
+import akka.actor.{ActorContext, ActorSystem}
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -15,9 +15,8 @@ import com.cysnake.ticket.actor.ResultCode
  * Time: 9:50 AM
  * if you have problem here, please contact me: cysnake4713@gmail.com
  */
-class CodeFrame extends SimpleSwingApplication {
+class CodeFrame(val context: ActorContext) extends SimpleSwingApplication {
   var image: Image = null
-  var codeActor: Actor = null
 
   def top: Frame = new MainFrame {
     title = "请输入验证码"
@@ -36,7 +35,7 @@ class CodeFrame extends SimpleSwingApplication {
     contents = new FlowPanel {
       contents += imageLabel
       contents += inputText
-//      focusable = true
+      //      focusable = true
       //      requestFocus
     }
 
@@ -45,8 +44,9 @@ class CodeFrame extends SimpleSwingApplication {
     reactions += {
       case EditDone(`inputText`) => {
         println("editDone")
+        val codeActor = context.actorFor("../getCodeActor")
         if (codeActor != null) {
-          codeActor.self ! ResultCode(inputText.text)
+          codeActor ! ResultCode(inputText.text)
         }
         closeOperation()
       }
@@ -54,8 +54,7 @@ class CodeFrame extends SimpleSwingApplication {
 
   }
 
-  def setImage(is: InputStream, actor: Actor) {
+  def setImage(is: InputStream) {
     image = ImageIO.read(is)
-    codeActor = actor
   }
 }

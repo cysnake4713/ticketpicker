@@ -7,6 +7,7 @@ import org.apache.http.{HttpVersion, HeaderElement, Header}
 import org.apache.http.params.CoreProtocolPNames
 import org.apache.http.client.methods.{HttpRequestBase, HttpGet, HttpPost}
 import org.apache.http.client.HttpClient
+import scala.io.Source
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -20,9 +21,10 @@ class HarEntity {
 
   def this(filePath: String) {
     this
-    val file = new FileInputStream(filePath)
+    val file = Source.fromURL(getClass.getResource(filePath))
+    //    val file = new FileInputStream(filePath)
 
-    val token = new JSONTokener(new InputStreamReader(file, "UTF-8"))
+    val token = new JSONTokener(file.reader())
     jsonObject = new JSONObject(token)
     file.close()
   }
@@ -59,13 +61,13 @@ class HarEntity {
   }
 
   def generateHttpRequest: HttpRequestBase = {
-//    val pattern11 = """.*1.1""".r
+    //    val pattern11 = """.*1.1""".r
     //TODO
-//    getHttpVersion match {
-//      case pattern11(test) => httpClient.getParams.setParameter(CoreProtocolPNames.PROTOCOL_VERSION,
-//        HttpVersion.HTTP_1_1)
-//      case _ => println("httpversion no match, use default!")
-//    }
+    //    getHttpVersion match {
+    //      case pattern11(test) => httpClient.getParams.setParameter(CoreProtocolPNames.PROTOCOL_VERSION,
+    //        HttpVersion.HTTP_1_1)
+    //      case _ => println("httpversion no match, use default!")
+    //    }
 
 
     val httpRequest = getMethod.toUpperCase match {

@@ -11,7 +11,7 @@ import com.cysnake.http.JavaHttpsUtil
  * if you have problem here, please contact me: cysnake4713@gmail.com
  */
 object HttpsUtil {
-  private val httpsUtil = JavaHttpsUtil.getNewHttpClient
+  private val httpsUtil = JavaHttpsUtil.getHttpClient
 
   def getHttpClient = httpsUtil
 

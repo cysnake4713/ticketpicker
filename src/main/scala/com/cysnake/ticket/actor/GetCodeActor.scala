@@ -41,7 +41,7 @@ class GetCodeActor extends Actor {
 
   def receive = {
     case GetCode => {
-      val path = """file\head\passCodeAction.do.har"""
+      val path = """/head/passCodeAction.do.har"""
       val har = new HarEntity(path)
 
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]

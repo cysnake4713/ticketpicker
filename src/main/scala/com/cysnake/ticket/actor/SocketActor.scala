@@ -23,6 +23,9 @@ class SocketActor extends Actor with ActorLogging {
 
     case Request(httpRequest: HttpRequestBase) => {
       log.debug("get request from:" + sender)
+      log.debug("request url:" + httpRequest.getURI)
+      log.debug("request method:" + httpRequest.getMethod)
+      log.debug("request param:" + httpRequest.getParams)
       val response = httpClient.execute(httpRequest)
       sender ! Response(response)
     }

@@ -1,12 +1,9 @@
 package com.cysnake.har
 
-import java.io.{FileInputStream, InputStreamReader}
 import org.json.{JSONArray, JSONObject, JSONTokener}
 import collection.mutable
-import org.apache.http.{HttpVersion, HeaderElement, Header}
-import org.apache.http.params.CoreProtocolPNames
+import org.apache.http.{HeaderElement, Header}
 import org.apache.http.client.methods.{HttpRequestBase, HttpGet, HttpPost}
-import org.apache.http.client.HttpClient
 import scala.io.Source
 
 /**
@@ -31,13 +28,11 @@ class HarEntity {
 
   def getUrl: String = {
     val result = jsonObject.get("request").asInstanceOf[JSONObject].get("url").asInstanceOf[String]
-    println("request url:" + result)
     result
   }
 
   def getMethod: String = {
     val method = jsonObject.get("request").asInstanceOf[JSONObject].get("method").asInstanceOf[String]
-    println("requst method:" + method)
     method
   }
 
@@ -56,7 +51,6 @@ class HarEntity {
 
   def getHttpVersion: String = {
     val version = jsonObject.get("request").asInstanceOf[JSONObject].get("httpVersion").asInstanceOf[String]
-    println("request version:" + version)
     version
   }
 
@@ -83,8 +77,7 @@ class HarEntity {
         httpGet
       }
       case _ => {
-        println("http request method match error!exit")
-        System.exit(0)
+        throw new TypeNotPresentException("harMethodError", null)
       }
     }
     httpRequest.asInstanceOf[HttpRequestBase]

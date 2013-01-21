@@ -1,6 +1,6 @@
 package com.cysnake.ticket
 
-import http.{HttpsUtil, JavaHttpsUtil}
+import http.HttpsUtil
 import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.HttpHost
 import org.apache.http.conn.params.ConnRoutePNames

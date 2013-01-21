@@ -1,14 +1,11 @@
 package com.cysnake.ticket.actor
 
-import akka.actor.Actor
+import akka.actor.{ActorLogging, Actor}
 import com.cysnake.har.HarEntity
-import org.apache.http.client.methods.{HttpGet, HttpPost}
+import org.apache.http.client.methods.HttpPost
 import org.json.{JSONTokener, JSONObject}
 import java.io.InputStreamReader
 import org.apache.http.util.EntityUtils
-import com.cysnake.ticket.http.HttpsUtil
-import org.apache.http.client.HttpClient
-import com.cysnake.ticket.ui.CodeFrame
 import org.apache.http.HttpResponse
 
 import akka.dispatch.Future
@@ -23,36 +20,24 @@ import akka.util.duration._
  * Time: 5:09 PM
  * if you have problem here, please contact me: cysnake4713@gmail.com
  */
-class LoginActor extends Actor {
+class LoginActor extends Actor with ActorLogging {
+
+  import com.cysnake.ticket.actor.SocketActor._
+  import com.cysnake.ticket.actor.LoginActor._
+
   implicit val timeout = Timeout(10 seconds)
 
-  import context._
 
   def receive = {
     case LoginFirst(code) => {
-      println("login now")
-      //      val httpClient = HttpsUtil.getHttpClient
-
-      //      val path = """d:\ticket\head\loginPassCode.do.har"""
-      //      val har = new HarEntity(path)
-      //      val httpGet = har.generateHttpRequest(httpClient).asInstanceOf[HttpGet]
-      //      val response = httpClient.execute(httpGet)
-      //      println("status: " + response.getStatusLine)
-      //      val entity = response.getEntity
-      //      val codeFrame = new CodeFrame
-      //      codeFrame.setImage(entity.getContent, this)
-      //      codeFrame.startup(Array.empty)
-      //      EntityUtils.consume(entity)
-
-
+      log.debug("login now")
       val path = """/head/loginAction.do.har"""
       val har = new HarEntity(path)
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
       val socket = context.actorFor("../socketActor")
-      val future: Future[Response] = ask(socket, Send(httpPost)).mapTo[Response]
-      future.map(ele => ele match {
-        case Response(response: HttpResponse) => {
-          println("status: " + response.getStatusLine)
+      (socket ? Send(httpPost)).onSuccess {
+        case response: HttpResponse => {
+          log.debug("status: " + response.getStatusLine)
           val entity = response.getEntity
           val CharsetPattern = """.*charset=(.*)""".r
           val charset = entity.getContentType.getValue match {
@@ -66,12 +51,14 @@ class LoginActor extends Actor {
           println("rand number is: " + rand)
 
         }
-      })
-
-
+      }
     }
   }
 }
 
+object LoginActor {
 
-case class LoginFirst(code: String)
+  case class LoginFirst(code: String)
+
+}
+

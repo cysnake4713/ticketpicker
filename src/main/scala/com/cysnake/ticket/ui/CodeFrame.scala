@@ -1,22 +1,25 @@
 package com.cysnake.ticket.ui
 
 import scala.swing._
-import event.{EditDone, Key, KeyPressed}
+import event.EditDone
 import java.io.InputStream
 import javax.swing.ImageIcon
 import javax.imageio.ImageIO
-import com.cysnake.ticket.actor.ResultCode
-import akka.actor.{ActorContext, ActorSystem}
+import akka.actor.ActorRef
+import com.cysnake.ticket.actor.MainActor._
 
 /**
- * This code is written by matt.cai and if you want use it, feel free!
+  * This code is written by matt.cai and if you want use it, feel free!
  * User: matt.cai
  * Date: 1/17/13
  * Time: 9:50 AM
  * if you have problem here, please contact me: cysnake4713@gmail.com
  */
-class CodeFrame(val context: ActorContext) extends SimpleSwingApplication {
+class CodeFrame(val actor: ActorRef, val codeType: String) extends SimpleSwingApplication {
+
+
   var image: Image = null
+  var flag = false
 
   def top: Frame = new MainFrame {
     title = "请输入验证码"
@@ -29,26 +32,23 @@ class CodeFrame(val context: ActorContext) extends SimpleSwingApplication {
       columns = 4
     }
 
-    //    val label = new Label {
-    //      text = "asdfasdf"
-    //    }
     contents = new FlowPanel {
       contents += imageLabel
       contents += inputText
       //      focusable = true
-      //      requestFocus
+      //      requestFocus()
     }
 
     listenTo(inputText)
 
     reactions += {
       case EditDone(`inputText`) => {
-        println("editDone")
-        val codeActor = context.actorFor("../getCodeActor")
-        if (codeActor != null) {
-          codeActor ! ResultCode(inputText.text)
+        if (!flag) {
+          println("code Frame get EditDone message!")
+          actor ! GetCodeResult(inputText.text, codeType)
+          flag = true
+          closeOperation()
         }
-        closeOperation()
       }
     }
 

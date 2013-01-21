@@ -1,12 +1,8 @@
 package com.cysnake.ticket
 
-import actor.{StartMain, MainActor, GetCode, GetCodeActor}
-import ui.CodeFrame
-import java.net.URL
-import akka.util.Timeout
+import actor.MainActor
+import actor.MainActor.StartMain
 import akka.actor.{Props, ActorSystem}
-import akka.dispatch.Await
-import com.typesafe.config.ConfigFactory
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -24,9 +20,5 @@ object Main {
     val mainActor = system.actorOf(Props[MainActor], name = "MainActor")
     println(System.getProperty("user.dir"))
     mainActor ! StartMain
-    //    Login.getPage("""d:\ticket\head\loginpage.har""")
-
-    //    Login.login1("""d:\ticket\head\loginAction.do.har""")
-    //    Login.login("""d:\ticket\head\loginAction.do2.har""")
   }
 }

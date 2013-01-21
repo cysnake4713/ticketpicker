@@ -1,6 +1,6 @@
 package com.cysnake.ticket
 
-import http.{HttpsUtil, JavaHttpsUtil}
+import http.HttpsUtil
 import java.util.Properties
 import java.io._
 import org.apache.http.client.methods.{HttpGet, HttpPost}
@@ -11,7 +11,6 @@ import org.json.{JSONObject, JSONTokener}
 import org.apache.http.protocol.HTTP
 import org.apache.http.params.CoreProtocolPNames
 import org.apache.http.HttpVersion
-import org.apache.http.entity.mime.Header
 import com.cysnake.har.HarEntity
 
 /**

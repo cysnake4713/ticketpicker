@@ -1,7 +1,8 @@
 package com.cysnake.ticket.actor
 
-import akka.actor.{Props, ReceiveTimeout, Actor}
+import akka.actor.{ActorLogging, Props, ReceiveTimeout, Actor}
 import akka.util.duration._
+import akka.pattern.ask
 
 
 /**
@@ -11,47 +12,52 @@ import akka.util.duration._
  * Time: 11:17 AM
  * if you have problem here, please contact me: cysnake4713@gmail.com
  */
-class MainActor extends Actor {
-  //  implicit val httpClient = HttpsUtil.getHttpClient
+class MainActor extends Actor with ActorLogging {
 
-  import context._
+  import com.cysnake.ticket.actor.GetCodeActor._
+  import com.cysnake.ticket.actor.MainActor._
+  import com.cysnake.ticket.actor.LoginActor._
 
-  context.setReceiveTimeout(15 seconds)
+  context.setReceiveTimeout(30 seconds)
 
   val loginActor = context.actorOf(Props[LoginActor], name = "loginActor")
   val socketActor = context.actorOf(Props[SocketActor], name = "socketActor")
   val getCodeActor = context.actorOf(Props[GetCodeActor], name = "getCodeActor")
 
-  //  override def preStart() {
-  //    super.preStart()
-  //    println("start")
-  //  }
-  //
-  //
-  //  override def postStop() {
-  //    super.postStop()
-  //    println("stop")
-  //  }
-
   override def receive: Receive = {
     case StartMain => {
-      getCodeActor ! GetCode
+      log.debug("send Get Code to getCodeActor")
+      val path = """/head/passCodeAction.do.har"""
+      getCodeActor ! GetCode(path)
     }
 
-    case GetCodeRuselt(code) => {
-      println("get code Ruselt")
-      loginActor ! LoginFirst(code)
+    case GetCodeResult(code, codeType) => {
+      log.debug("get code Ruselt: " + code + " code type:" + codeType)
+      codeType match {
+        case "login" => {
+          loginActor ! LoginFirst(code)
+
+        }
+      }
     }
 
-    case ReceiveTimeout => context.system.shutdown()
+    case ReceiveTimeout => {
+      log.debug("receive timeout. shutdown now.")
+      context.system.shutdown()
 
-    case _ => println("match error")
+    }
+
+    case _ => log.error(self + "match error")
 
 
   }
 }
 
+object MainActor {
 
-case class StartMain()
+  case class StartMain()
 
-case class GetCodeRuselt(code: String)
+  case class GetCodeResult(code: String, codeType: String)
+
+}
+

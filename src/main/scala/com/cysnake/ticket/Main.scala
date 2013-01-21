@@ -3,6 +3,7 @@ package com.cysnake.ticket
 import actor.MainActor
 import actor.MainActor.StartMain
 import akka.actor.{Props, ActorSystem}
+import http.HttpsUtil
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -18,7 +19,7 @@ object Main {
     println("start")
     val system = ActorSystem("MySystem")
     val mainActor = system.actorOf(Props[MainActor], name = "MainActor")
-    println(System.getProperty("user.dir"))
     mainActor ! StartMain
+
   }
 }

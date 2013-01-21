@@ -4,6 +4,7 @@ import akka.actor.{ActorLogging, Actor}
 import com.cysnake.ticket.http.HttpsUtil
 import org.apache.http.client.methods.HttpRequestBase
 import org.apache.http.HttpResponse
+import akka.actor.Status.Success
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -20,7 +21,7 @@ class SocketActor extends Actor with ActorLogging {
 
   protected def receive: SocketActor#Receive = {
 
-    case Send(httpRequest: HttpRequestBase) => {
+    case Request(httpRequest: HttpRequestBase) => {
       log.debug("get request from:" + sender)
       val response = httpClient.execute(httpRequest)
       sender ! Response(response)
@@ -30,7 +31,7 @@ class SocketActor extends Actor with ActorLogging {
 
 object SocketActor {
 
-  case class Send(httpRequest: HttpRequestBase)
+  case class Request(httpRequest: HttpRequestBase)
 
   case class Response(response: HttpResponse)
 

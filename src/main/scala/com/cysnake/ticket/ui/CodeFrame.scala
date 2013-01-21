@@ -6,10 +6,10 @@ import java.io.InputStream
 import javax.swing.ImageIcon
 import javax.imageio.ImageIO
 import akka.actor.ActorRef
-import com.cysnake.ticket.actor.MainActor._
+import com.cysnake.ticket.actor.CodeActor.ReturnCodeResult
 
 /**
-  * This code is written by matt.cai and if you want use it, feel free!
+ * This code is written by matt.cai and if you want use it, feel free!
  * User: matt.cai
  * Date: 1/17/13
  * Time: 9:50 AM
@@ -45,7 +45,7 @@ class CodeFrame(val actor: ActorRef, val codeType: String) extends SimpleSwingAp
       case EditDone(`inputText`) => {
         if (!flag) {
           println("code Frame get EditDone message!")
-          actor ! GetCodeResult(inputText.text, codeType)
+          actor ! ReturnCodeResult(inputText.text)
           flag = true
           closeOperation()
         }

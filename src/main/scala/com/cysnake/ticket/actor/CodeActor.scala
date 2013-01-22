@@ -28,23 +28,22 @@ class CodeActor extends Actor with ActorLogging {
 
   import com.cysnake.ticket.actor.SocketActor._
 
+
   def receive = {
     case GetCode(path: String, sourceActor) => {
 
       val har = new HarEntity(path)
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
-      val socket = context.actorFor("../socketActor")
 
+      val socket = context.actorFor("../socketActor")
       log.debug(self + "send request to socketActor")
       (socket ? Request(httpGet)).mapTo[Response] onSuccess {
         case Response(response) => {
           log.debug("response status: " + response.getStatusLine)
           if (response.getStatusLine.getStatusCode == HttpStatus.SC_OK) {
             val entity = response.getEntity
-            val codeFrame = new CodeFrame(sourceActor, "login")
             val stream = entity.getContent
-            codeFrame.setImage(entity.getContent)
-            codeFrame.startup(Array.empty)
+            CodeFrame.showDialog(entity.getContent, sourceActor)
             EntityUtils.consume(entity)
             stream.close()
             httpGet.releaseConnection()
@@ -62,6 +61,8 @@ class CodeActor extends Actor with ActorLogging {
 object CodeActor {
 
   case class GetCode(path: String, sourceActor: ActorRef)
+
   case class ReturnCodeResult(code: String)
+
 }
 

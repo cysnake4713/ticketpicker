@@ -5,8 +5,10 @@ import event.EditDone
 import java.io.InputStream
 import javax.swing.ImageIcon
 import javax.imageio.ImageIO
-import akka.actor.ActorRef
+import akka.actor.{Props, ActorSystem, ActorRef}
 import com.cysnake.ticket.actor.CodeActor.ReturnCodeResult
+import com.cysnake.ticket.actor.MainActor._
+import com.cysnake.ticket.actor.MainActor
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -15,46 +17,51 @@ import com.cysnake.ticket.actor.CodeActor.ReturnCodeResult
  * Time: 9:50 AM
  * if you have problem here, please contact me: cysnake4713@gmail.com
  */
-class CodeFrame(val actor: ActorRef, val codeType: String) extends SimpleSwingApplication {
-
-
-  var image: Image = null
-  var flag = false
+object CodeFrame extends SimpleSwingApplication {
 
   def top: Frame = new MainFrame {
-    title = "请输入验证码"
 
+
+  }
+
+  def showDialog(is: InputStream, thisActor: ActorRef) {
+    val codeDialog = new CodeDialog(is, thisActor)
+    codeDialog.centerOnScreen()
+  }
+
+  class CodeDialog(is: InputStream, thisActor: ActorRef) extends Dialog {
+    title = "请输入验证码"
     val imageLabel = new Label {
-      if (image != null)
-        icon = new ImageIcon(image)
+      if (is != null)
+        icon = new ImageIcon(ImageIO.read(is))
     }
     val inputText = new TextField {
       columns = 4
     }
-
     contents = new FlowPanel {
       contents += imageLabel
       contents += inputText
       //      focusable = true
       //      requestFocus()
     }
-
     listenTo(inputText)
 
     reactions += {
       case EditDone(`inputText`) => {
-        if (!flag) {
-          println("code Frame get EditDone message!")
-          actor ! ReturnCodeResult(inputText.text)
-          flag = true
-          closeOperation()
+        println("code Frame get EditDone message!" + thisActor)
+        if (thisActor != null) {
+          thisActor ! ReturnCodeResult(inputText.text)
+          CodeDialog.this.close()
         }
       }
     }
-
   }
 
-  def setImage(is: InputStream) {
-    image = ImageIO.read(is)
+  override def startup(args: Array[String]) {
+    super.startup(args)
+    println("start")
+    val system = ActorSystem("MySystem")
+    val mainActor = system.actorOf(Props[MainActor], name = "MainActor")
+    mainActor ! StartMain
   }
 }

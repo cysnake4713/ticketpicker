@@ -97,7 +97,7 @@ public class JavaHttpsUtil {
         HttpParams params = new BasicHttpParams();
         params.setParameter(ClientPNames.COOKIE_POLICY,
                 CookiePolicy.BROWSER_COMPATIBILITY);
-        params.setBooleanParameter(ClientPNames.ALLOW_CIRCULAR_REDIRECTS, true);
+        params.setBooleanParameter(ClientPNames.ALLOW_CIRCULAR_REDIRECTS, false);
         params.setIntParameter(ClientPNames.MAX_REDIRECTS, 100);
 //		params.setParameter(ClientPNames.DEFAULT_HOST,new HttpHost("dynamic.12306.cn",80));
 

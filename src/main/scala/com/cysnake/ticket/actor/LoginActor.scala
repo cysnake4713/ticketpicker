@@ -4,14 +4,19 @@ import akka.actor.{ActorLogging, Actor}
 import com.cysnake.har.HarEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.json.{JSONTokener, JSONObject}
-import java.io.InputStreamReader
+import java.io._
 import org.apache.http.util.EntityUtils
 
 import akka.pattern.ask
 import akka.util.Timeout
 import akka.util.duration._
-import com.cysnake.ticket.actor.CodeActor.{ReturnCodeResult, GetCode}
-import org.apache.http.HttpStatus
+import org.apache.http.{NameValuePair, HttpStatus}
+import org.apache.http.message.BasicNameValuePair
+import org.apache.http.client.entity.UrlEncodedFormEntity
+import com.cysnake.ticket.actor.CodeActor.ReturnCodeResult
+import com.cysnake.ticket.actor.CodeActor.GetCode
+import java.util
+import com.cysnake.ticket.ui.CodeFrame
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -66,9 +71,9 @@ class LoginActor extends Actor with ActorLogging {
             val entity = response.getEntity
             val CharsetPattern = """.*charset=(.*)""".r
             val charset = entity.getContentType.getValue match {
-              case CharsetPattern(code) => code
+              case CharsetPattern(w) => w
             }
-            val json = new JSONObject(new JSONTokener(new InputStreamReader(entity.getContent, charset.asInstanceOf[String])))
+            val json = new JSONObject(new JSONTokener(new InputStreamReader(entity.getContent, charset)))
             EntityUtils.consume(entity)
             //      httpPost.releaseConnection()
             val rand = json.get("loginRand").asInstanceOf[String]
@@ -86,7 +91,46 @@ class LoginActor extends Actor with ActorLogging {
       val path = """/head/loginAction2.do.har"""
       val har = new HarEntity(path)
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
+      val formParams = new util.ArrayList[NameValuePair]
+      formParams add new BasicNameValuePair("loginRand", rand)
+      formParams add new BasicNameValuePair("refundLogin", "N")
+      formParams add new BasicNameValuePair("refundFlag", "Y")
+      formParams add new BasicNameValuePair("loginUser.user_name", "dongcidaci1")
+      formParams add new BasicNameValuePair("nameErrorFocus", "")
+      formParams add new BasicNameValuePair("user.password", "36937004cys")
+      formParams add new BasicNameValuePair("passwordErrorFocus", "")
+      formParams add new BasicNameValuePair("randErrorFocus", "")
+      formParams add new BasicNameValuePair("randCode", code)
+      val entity = new UrlEncodedFormEntity(formParams, "UTF-8")
+      httpPost.setEntity(entity)
+      (socketActor ? Request(httpPost)).mapTo[Response] onSuccess {
+        case Response(response) => {
+          httpPost.releaseConnection()
+          self ! IsLogin
+        }
+      }
+    }
 
+
+    case IsLogin => {
+      val path = "/head/querySingleAction.do.har"
+      val har = new HarEntity(path)
+      val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
+      (socketActor ? Request(httpGet)).mapTo[Response] onSuccess {
+        case Response(response) => {
+          log.debug("IsLogin result:success")
+          httpGet.releaseConnection()
+          context.system.shutdown()
+        }
+      } onFailure {
+        case e: Exception => {
+          log.debug("IsLogin result:failure")
+          httpGet.releaseConnection()
+          context.system.shutdown()
+
+        }
+        case _ => log.debug("cant' match failure")
+      }
     }
   }
 }
@@ -98,6 +142,8 @@ object LoginActor {
   case class LoginSecond(code: String, rand: String)
 
   case class GetCookie()
+
+  case class IsLogin()
 
 }
 

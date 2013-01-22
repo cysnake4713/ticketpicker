@@ -13,5 +13,6 @@ libraryDependencies ++= Seq(
     "com.typesafe.akka" % "akka-actor" % "2.0.5",
     "org.apache.httpcomponents" % "httpclient" % "4.2.3",
     "org.scala-lang" % "scala-swing" % "2.9.2",
-    "org.json" % "json" % "20090211"
+    "org.json" % "json" % "20090211",
+    "log4j" % "log4j" % "1.2.17"
 )

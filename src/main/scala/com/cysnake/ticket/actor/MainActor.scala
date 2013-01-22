@@ -2,7 +2,6 @@ package com.cysnake.ticket.actor
 
 import akka.actor.{ActorLogging, Props, ReceiveTimeout, Actor}
 import akka.util.duration._
-import akka.pattern.ask
 import akka.util.Timeout
 
 /**
@@ -17,7 +16,7 @@ class MainActor extends Actor with ActorLogging {
   import com.cysnake.ticket.actor.MainActor._
   import com.cysnake.ticket.actor.LoginActor._
 
-  context.setReceiveTimeout(12 seconds)
+  context.setReceiveTimeout(30 seconds)
   implicit val timeout = Timeout(10 seconds)
 
   val loginActor = context.actorOf(Props[LoginActor], name = "loginActor")

@@ -3,14 +3,18 @@ package com.cysnake.ticket.actor
 import akka.actor.{ActorRef, ActorLogging, Actor}
 import com.cysnake.har.HarEntity
 import org.apache.http.client.methods.HttpGet
-import com.cysnake.ticket.ui.CodeFrame
 import org.apache.http.util.EntityUtils
 import org.apache.http.HttpStatus
 import akka.pattern.ask
 import akka.util.Timeout
 import akka.util.duration._
 import scala.Predef._
-import com.cysnake.ticket.actor.CodeActor.GetCode
+import com.cysnake.ticket.actor.CodeActor.{ReturnCodeResult, GetCode}
+import java.io.InputStream
+import swing.{FlowPanel, TextField, Label, Dialog}
+import javax.swing.ImageIcon
+import javax.imageio.ImageIO
+import swing.event.EditDone
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -43,7 +47,7 @@ class CodeActor extends Actor with ActorLogging {
           if (response.getStatusLine.getStatusCode == HttpStatus.SC_OK) {
             val entity = response.getEntity
             val stream = entity.getContent
-            CodeFrame.showDialog(entity.getContent, sourceActor)
+            CodeDialog.start(entity.getContent, sourceActor)
             EntityUtils.consume(entity)
             stream.close()
             httpGet.releaseConnection()
@@ -53,6 +57,40 @@ class CodeActor extends Actor with ActorLogging {
         }
       }
 
+    }
+  }
+
+  object CodeDialog extends Dialog {
+    title = "请输入验证码"
+    val imageLabel = new Label
+    var thisActor: ActorRef = null
+    val inputText = new TextField {
+      columns = 4
+    }
+    contents = new FlowPanel {
+      contents += imageLabel
+      contents += inputText
+      //      focusable = true
+      //      requestFocus()
+    }
+    listenTo(inputText)
+
+    reactions += {
+      case EditDone(`inputText`) => {
+        println("code Frame get EditDone message!" + thisActor)
+        if (thisActor != null) {
+          thisActor ! ReturnCodeResult(inputText.text)
+          this.close()
+        }
+      }
+    }
+
+    def start(is: InputStream, actor: ActorRef) {
+      if (is != null)
+        imageLabel.icon = new ImageIcon(ImageIO.read(is))
+      thisActor = actor
+      this.centerOnScreen()
+      this.open()
     }
   }
 

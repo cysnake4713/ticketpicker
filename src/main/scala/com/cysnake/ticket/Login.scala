@@ -9,7 +9,6 @@ import java.io.InputStreamReader
 import org.json.{JSONObject, JSONTokener}
 import org.apache.http.message.BasicNameValuePair
 import java.util.ArrayList
-import ui.CodeFrame
 import scala.actors.Actor._
 
 /**

@@ -15,8 +15,8 @@ class MainActor extends Actor with ActorLogging {
 
   import com.cysnake.ticket.actor.MainActor._
   import com.cysnake.ticket.actor.LoginActor._
+  context.setReceiveTimeout(15 seconds)
 
-  context.setReceiveTimeout(30 seconds)
   implicit val timeout = Timeout(10 seconds)
 
   val loginActor = context.actorOf(Props[LoginActor], name = "loginActor")

@@ -16,7 +16,8 @@ import org.apache.http.client.entity.UrlEncodedFormEntity
 import com.cysnake.ticket.actor.CodeActor.ReturnCodeResult
 import com.cysnake.ticket.actor.CodeActor.GetCode
 import java.util
-import com.cysnake.ticket.ui.CodeFrame
+
+//import com.cysnake.ticket.ui.CodeFrame
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -124,7 +125,7 @@ class LoginActor extends Actor with ActorLogging {
         }
       } onFailure {
         case e: Exception => {
-          log.debug("IsLogin result:failure")
+          log.error(e, "IsLogin result:failure")
           httpGet.releaseConnection()
           context.system.shutdown()
 

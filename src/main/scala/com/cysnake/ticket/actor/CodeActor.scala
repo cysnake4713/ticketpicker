@@ -15,6 +15,7 @@ import swing.{FlowPanel, TextField, Label, Dialog}
 import javax.swing.ImageIcon
 import javax.imageio.ImageIO
 import swing.event.EditDone
+import java.awt.Dimension
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -67,9 +68,13 @@ class CodeActor extends Actor with ActorLogging {
     val inputText = new TextField {
       columns = 4
     }
+
+
+    preferredSize = new Dimension(150, 60)
     contents = new FlowPanel {
       contents += imageLabel
       contents += inputText
+
       //      focusable = true
       //      requestFocus()
     }
@@ -80,12 +85,14 @@ class CodeActor extends Actor with ActorLogging {
         println("code Frame get EditDone message!" + thisActor)
         if (thisActor != null) {
           thisActor ! ReturnCodeResult(inputText.text)
-          this.close()
+          thisActor = null
         }
+        this.dispose()
       }
     }
 
     def start(is: InputStream, actor: ActorRef) {
+      inputText.text = ""
       if (is != null)
         imageLabel.icon = new ImageIcon(ImageIO.read(is))
       thisActor = actor

@@ -46,7 +46,6 @@ class LoginActor extends Actor with ActorLogging {
       (socketActor ? Request(httpGet)).mapTo[Response] onSuccess {
         case Response(response) => {
           log.debug("status:" + response.getStatusLine)
-          log.debug("setcookie value:" + response.getHeaders("Set-Cookie")(0).getValue)
           httpGet.releaseConnection()
           log.debug("send Get Code to getCodeActor")
           val path = """/head/passCodeAction.do.har"""
@@ -121,13 +120,14 @@ class LoginActor extends Actor with ActorLogging {
         case Response(response) => {
           log.debug("IsLogin result:success")
           httpGet.releaseConnection()
+          //          self ! GetCookie
           context.system.shutdown()
         }
       } onFailure {
         case e: Exception => {
           log.error(e, "IsLogin result:failure")
           httpGet.releaseConnection()
-          context.system.shutdown()
+          //          context.system.shutdown()
 
         }
         case _ => log.debug("cant' match failure")

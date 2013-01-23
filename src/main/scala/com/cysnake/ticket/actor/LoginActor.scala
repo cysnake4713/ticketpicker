@@ -1,6 +1,6 @@
 package com.cysnake.ticket.actor
 
-import akka.actor.{ActorLogging, Actor}
+import akka.actor.{OneForOneStrategy, SupervisorStrategy, ActorLogging, Actor}
 import com.cysnake.har.HarEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.json.{JSONTokener, JSONObject}
@@ -16,6 +16,7 @@ import org.apache.http.client.entity.UrlEncodedFormEntity
 import com.cysnake.ticket.actor.CodeActor.ReturnCodeResult
 import com.cysnake.ticket.actor.CodeActor.GetCode
 import java.util
+import akka.actor.SupervisorStrategy.Restart
 
 //import com.cysnake.ticket.ui.CodeFrame
 
@@ -35,6 +36,11 @@ class LoginActor extends Actor with ActorLogging {
   val codeActor = context.actorFor("../codeActor")
 
   implicit val timeout = Timeout(10 seconds)
+
+
+  override val supervisorStrategy = OneForOneStrategy(maxNrOfRetries = 3, withinTimeRange = 20 seconds) {
+    case _: ReLoad => Restart
+  }
 
   def receive = {
 
@@ -81,7 +87,7 @@ class LoginActor extends Actor with ActorLogging {
             httpPost.releaseConnection()
             self ! LoginSecond(code, rand)
           } else {
-            //TODO
+            //TODO :
           }
         }
       }
@@ -136,6 +142,8 @@ class LoginActor extends Actor with ActorLogging {
 
 
 object LoginActor {
+
+  case class ReLoad()
 
   case class LoginFirst(code: String)
 

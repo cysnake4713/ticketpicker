@@ -15,7 +15,8 @@ class MainActor extends Actor with ActorLogging {
 
   import com.cysnake.ticket.actor.MainActor._
   import com.cysnake.ticket.actor.LoginActor._
-  context.setReceiveTimeout(15 seconds)
+
+  //  context.setReceiveTimeout(15 seconds)
 
   implicit val timeout = Timeout(10 seconds)
 
@@ -27,6 +28,10 @@ class MainActor extends Actor with ActorLogging {
   override def receive: Receive = {
     case StartMain => {
       loginActor ! GetCookie
+    }
+
+    case LoginSuccess => {
+      context.system.shutdown()
     }
 
     case ReceiveTimeout => {

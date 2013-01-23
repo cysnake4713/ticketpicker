@@ -34,6 +34,17 @@ class CodeActor extends Actor with ActorLogging {
   import com.cysnake.ticket.actor.SocketActor._
 
 
+  override def preStart() {
+    super.preStart()
+    CodeDialog.centerOnScreen()
+  }
+
+
+  override def postStop() {
+    super.postStop()
+    CodeDialog.dispose()
+  }
+
   def receive = {
     case GetCode(path: String, sourceActor) => {
 
@@ -87,16 +98,19 @@ class CodeActor extends Actor with ActorLogging {
           thisActor ! ReturnCodeResult(inputText.text)
           thisActor = null
         }
-        this.dispose()
+        this.close()
       }
     }
 
     def start(is: InputStream, actor: ActorRef) {
       inputText.text = ""
       if (is != null)
-        imageLabel.icon = new ImageIcon(ImageIO.read(is))
+        try {
+          imageLabel.icon = new ImageIcon(ImageIO.read(is))
+        } catch {
+          case e: Exception => log.error(e, "parse image error!!!------------" + actor)
+        }
       thisActor = actor
-      this.centerOnScreen()
       this.open()
     }
   }

@@ -113,28 +113,27 @@ class LoginActor extends Actor with ActorLogging {
 
 
     case IsLogin => {
-      val path = "/head/querySingleAction.do.har"
+      val path = "/head/ticketPassCode.do.har"
       val har = new HarEntity(path)
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
       (socketActor ? Request(httpGet)).mapTo[Response] onSuccess {
         case Response(response) => {
-          log.debug("IsLogin result:success")
-          httpGet.releaseConnection()
-          //          self ! GetCookie
-          context.system.shutdown()
+          log.debug("response status:" + response.getStatusLine)
+          log.debug("content long: " + response.getEntity.getContentLength)
+          if (response.getEntity.getContentLength != 0) {
+            log.debug("IsLogin result:success")
+            context.parent ! LoginSuccess
+            httpGet.releaseConnection()
+          } else {
+            //TODO
+            context.system.shutdown()
+          }
         }
-      } onFailure {
-        case e: Exception => {
-          log.error(e, "IsLogin result:failure")
-          httpGet.releaseConnection()
-          //          context.system.shutdown()
-
-        }
-        case _ => log.debug("cant' match failure")
       }
     }
   }
 }
+
 
 object LoginActor {
 
@@ -145,6 +144,8 @@ object LoginActor {
   case class GetCookie()
 
   case class IsLogin()
+
+  case class LoginSuccess()
 
 }
 

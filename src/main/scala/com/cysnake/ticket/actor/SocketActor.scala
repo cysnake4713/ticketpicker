@@ -3,10 +3,8 @@ package com.cysnake.ticket.actor
 import akka.actor.{ActorLogging, Actor}
 import com.cysnake.ticket.http.HttpsUtil
 import org.apache.http.client.methods.HttpRequestBase
-import org.apache.http.{NoHttpResponseException, HttpResponse}
+import org.apache.http.HttpResponse
 import org.apache.http.impl.client.DefaultHttpClient
-import akka.actor.Status.Failure
-import java.net.SocketException
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -21,26 +19,33 @@ class SocketActor extends Actor with ActorLogging {
 
   val httpClient = HttpsUtil.getHttpClient
 
+
+  override def postRestart(reason: Throwable) {
+    self ! Request(reason.asInstanceOf[SocketActor.SocketException].httpRequest)
+  }
+
   protected def receive: SocketActor#Receive = {
 
     case Request(httpRequest: HttpRequestBase) => {
       log.debug("get request from:" + sender)
       log.debug("request url:" + httpRequest.getURI)
       log.debug("request method:" + httpRequest.getMethod)
-//      log.debug("request param:" + httpRequest.getParams)
-      log.debug("cookis is :" + httpClient.asInstanceOf[DefaultHttpClient].getCookieStore.getCookies)
+      //      log.debug("request param:" + httpRequest.getParams)
       try {
-        val response = httpClient.execute(httpRequest)
-        sender ! Response(response)
-      }catch{
-        case ex:SocketException =>  sender ! Failure
+        log.debug("cookis is :" + httpClient.asInstanceOf[DefaultHttpClient].getCookieStore.getCookies)
+      } catch {
+        case e: Exception => throw new SocketActor.SocketException(httpRequest)
       }
+      val response = httpClient.execute(httpRequest)
+      sender ! Response(response)
 
     }
   }
 }
 
 object SocketActor {
+
+  case class SocketException(httpRequest: HttpRequestBase) extends RuntimeException()
 
   case class Request(httpRequest: HttpRequestBase)
 

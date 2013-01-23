@@ -17,6 +17,7 @@ import com.cysnake.ticket.actor.CodeActor.ReturnCodeResult
 import com.cysnake.ticket.actor.CodeActor.GetCode
 import java.util
 import akka.actor.SupervisorStrategy.Restart
+import java.lang.reflect.UndeclaredThrowableException
 
 //import com.cysnake.ticket.ui.CodeFrame
 
@@ -32,20 +33,22 @@ class LoginActor extends Actor with ActorLogging {
   import com.cysnake.ticket.actor.SocketActor._
   import com.cysnake.ticket.actor.LoginActor._
 
-  val socketActor = context.actorFor("../socketActor")
-  val codeActor = context.actorFor("../codeActor")
+  val socketActor = context.actorFor("/user/mainActor/socketActor")
+  val codeActor = context.actorFor("/user/mainActor/codeActor")
 
   implicit val timeout = Timeout(10 seconds)
 
 
-  override val supervisorStrategy = OneForOneStrategy(maxNrOfRetries = 3, withinTimeRange = 20 seconds) {
-    case _: ReLoad => Restart
+  override def postRestart(reason: Throwable) {
+    log.debug("postRestart start working now! sender is :" + context.parent)
+    self ! GetLoginCode
   }
 
   def receive = {
 
 
     case GetCookie => {
+      log.debug("GetCookie")
       val path = """/head/getCookie.har"""
       val har = new HarEntity(path)
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
@@ -53,12 +56,16 @@ class LoginActor extends Actor with ActorLogging {
         case Response(response) => {
           log.debug("status:" + response.getStatusLine)
           httpGet.releaseConnection()
-          log.debug("send Get Code to getCodeActor")
-          val path = """/head/passCodeAction.do.har"""
-          codeActor ! GetCode(path, self)
+          self ! GetLoginCode
         }
       }
 
+    }
+
+    case GetLoginCode => {
+      log.debug("send Get Code to getCodeActor")
+      val path = """/head/passCodeAction.do.har"""
+      codeActor ! GetCode(path, self)
     }
 
     case ReturnCodeResult(code) => {
@@ -66,7 +73,7 @@ class LoginActor extends Actor with ActorLogging {
     }
 
     case LoginFirst(code) => {
-      log.debug("login now")
+      log.debug("LoginFirst")
       val path = """/head/loginAction.do.har"""
       val har = new HarEntity(path)
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
@@ -87,13 +94,14 @@ class LoginActor extends Actor with ActorLogging {
             httpPost.releaseConnection()
             self ! LoginSecond(code, rand)
           } else {
-            //TODO :
+            self ! ThrowExecption
           }
         }
       }
     }
 
     case LoginSecond(code, rand) => {
+      log.debug("LoginSecond")
       val path = """/head/loginAction2.do.har"""
       val har = new HarEntity(path)
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
@@ -119,6 +127,7 @@ class LoginActor extends Actor with ActorLogging {
 
 
     case IsLogin => {
+      log.debug("IsLogin")
       val path = "/head/ticketPassCode.do.har"
       val har = new HarEntity(path)
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
@@ -131,19 +140,23 @@ class LoginActor extends Actor with ActorLogging {
             context.parent ! LoginSuccess
             httpGet.releaseConnection()
           } else {
-            //TODO
-            context.system.shutdown()
+            log.debug("login result: failure!!")
+            self ! ThrowExecption
           }
         }
       }
     }
+    case ThrowExecption => throw new LoginException("unable to login!!")
+
   }
 }
 
 
 object LoginActor {
 
-  case class ReLoad()
+  case class ThrowExecption()
+
+  case class LoginException(msg: String) extends RuntimeException(msg)
 
   case class LoginFirst(code: String)
 
@@ -154,6 +167,8 @@ object LoginActor {
   case class IsLogin()
 
   case class LoginSuccess()
+
+  case class GetLoginCode()
 
 }
 

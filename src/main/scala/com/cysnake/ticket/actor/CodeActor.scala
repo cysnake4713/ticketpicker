@@ -51,7 +51,7 @@ class CodeActor extends Actor with ActorLogging {
       val har = new HarEntity(path)
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
 
-      val socket = context.actorFor("../socketActor")
+      val socket = context.actorFor("/user/mainActor/socketActor")
       log.debug(self + "send request to socketActor")
       (socket ? Request(httpGet)).mapTo[Response] onSuccess {
         case Response(response) => {

@@ -37,8 +37,8 @@ import java.security.cert.X509Certificate;
  */
 public class JavaHttpsUtil {
 
-    private static final int CONNECT_TIMEOUT = 60000;
-    private static final int READ_TIMEOUT = 60000;
+    private static final int CONNECT_TIMEOUT = 10000;
+    private static final int READ_TIMEOUT = 10000;
 
 //    public static HttpClient getNewHttpClient() {
 //        try {

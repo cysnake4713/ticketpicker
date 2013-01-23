@@ -17,7 +17,7 @@ object Main {
   def main(args: Array[String]) {
     println("start")
     val system = ActorSystem("MySystem")
-    val mainActor = system.actorOf(Props[MainActor], name = "MainActor")
+    val mainActor = system.actorOf(Props[MainActor], name = "mainActor")
     mainActor ! StartMain
 
     //    Login.getPage("""d:\ticket\head\loginpage.har""")

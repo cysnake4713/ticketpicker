@@ -1,8 +1,10 @@
 package com.cysnake.ticket.actor
 
-import akka.actor.{ActorLogging, Props, ReceiveTimeout, Actor}
+import akka.actor._
 import akka.util.duration._
 import akka.util.Timeout
+import akka.actor.SupervisorStrategy.Restart
+import akka.event.LoggingReceive
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -16,16 +18,21 @@ class MainActor extends Actor with ActorLogging {
   import com.cysnake.ticket.actor.MainActor._
   import com.cysnake.ticket.actor.LoginActor._
 
+  override val supervisorStrategy = OneForOneStrategy(maxNrOfRetries = 4, withinTimeRange = 60 seconds) {
+    case _: LoginActor.LoginException => Restart
+    case _: SocketActor.SocketException => Restart
+  }
+
   //  context.setReceiveTimeout(15 seconds)
 
   implicit val timeout = Timeout(10 seconds)
 
-  val loginActor = context.actorOf(Props[LoginActor], name = "loginActor")
-  val socketActor = context.actorOf(Props[SocketActor], name = "socketActor")
+  val loginActor = context.watch(context.actorOf(Props[LoginActor], name = "loginActor"))
+  val socketActor = context.watch(context.actorOf(Props[SocketActor], name = "socketActor"))
   val codeActor = context.actorOf(Props[CodeActor], name = "codeActor")
 
 
-  override def receive: Receive = {
+  override def receive: Receive = LoggingReceive {
     case StartMain => {
       loginActor ! GetCookie
     }
@@ -39,6 +46,10 @@ class MainActor extends Actor with ActorLogging {
       context.system.shutdown()
 
     }
+
+    case Terminated(actorRef) if actorRef == loginActor =>
+      log.debug("loginActor terminated. shutdown now.")
+      context.system.shutdown()
 
     case _ => log.error(self + "match error")
 

@@ -5,6 +5,7 @@ import akka.util.duration._
 import akka.util.Timeout
 import akka.actor.SupervisorStrategy.Restart
 import akka.event.LoggingReceive
+import com.cysnake.ticket.actor.SearchActor._
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -30,7 +31,7 @@ class MainActor extends Actor with ActorLogging {
   val loginActor = context.watch(context.actorOf(Props[LoginActor], name = "loginActor"))
   val socketActor = context.watch(context.actorOf(Props[SocketActor], name = "socketActor"))
   val codeActor = context.actorOf(Props[CodeActor], name = "codeActor")
-
+  val searchActor = context.actorOf(Props[SearchActor], name = "searchActor")
 
   override def receive: Receive = LoggingReceive {
     case StartMain => {
@@ -38,7 +39,7 @@ class MainActor extends Actor with ActorLogging {
     }
 
     case LoginSuccess => {
-      context.system.shutdown()
+      searchActor ! SearchAllTrain
     }
 
     case ReceiveTimeout => {

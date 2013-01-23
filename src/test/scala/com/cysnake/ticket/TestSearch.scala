@@ -1,7 +1,6 @@
 package com.cysnake.ticket
 
-import actor.SearchActor
-import actor.SearchActor.Start
+import actor.MainActor
 import akka.testkit.TestKit
 import akka.actor.{Props, ActorSystem}
 import org.scalatest.{WordSpec, BeforeAndAfterAll}
@@ -25,8 +24,7 @@ with MustMatchers with BeforeAndAfterAll {
 
   "SearchActor" must {
     "start correct" in {
-      val searchActor = system.actorOf(Props[SearchActor])
-      searchActor ! Start
+      val mainActor = system.actorOf(Props[MainActor], name = "mainActor")
     }
 
   }

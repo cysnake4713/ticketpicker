@@ -16,6 +16,7 @@ import scala.io.Source
 class HarEntity {
   private var jsonObject: JSONObject = null
 
+
   def this(filePath: String) {
     this
     val file = Source.fromURL(getClass.getResource(filePath))
@@ -24,6 +25,10 @@ class HarEntity {
     val token = new JSONTokener(file.reader())
     jsonObject = new JSONObject(token)
     file.close()
+  }
+
+  def getJson: JSONObject = {
+    jsonObject
   }
 
   def getUrl: String = {
@@ -42,8 +47,8 @@ class HarEntity {
     var headerBuilder = mutable.ArrayBuilder.make[Header]
     for (i <- 0 to headers.length - 1) {
       val headerJson = headers.getJSONObject(i)
-      if ("Content-Length".equalsIgnoreCase(headerJson.get("name").toString) &&
-        "Cookie".equalsIgnoreCase(headerJson.get("name").toString))
+      if (("Content-Length".equalsIgnoreCase(headerJson.get("name").toString) &&
+        "Cookie".equalsIgnoreCase(headerJson.get("name").toString)))
         headerBuilder += new HeaderImpl(headerJson.get("name").toString, headerJson.get("value").toString)
     }
     headerBuilder.result()
@@ -80,8 +85,9 @@ class HarEntity {
         throw new TypeNotPresentException("harMethodError", null)
       }
     }
-    httpRequest.asInstanceOf[HttpRequestBase]
+    httpRequest
   }
+
 
   class HeaderImpl(val name: String, val value: String) extends Header {
 

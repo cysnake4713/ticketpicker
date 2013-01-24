@@ -1,7 +1,8 @@
 <tickets>
     <ticket>
-        <from>SNH</from>
-        <to> XHH</to>
+        <from>SZQ</from>
+        <to>GBQ</to>
+        <train>D7012</train>
         <date>2013-01-31</date>
         <time>00%3A00--24%3A00</time>
     </ticket>

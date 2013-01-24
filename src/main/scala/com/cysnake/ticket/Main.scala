@@ -19,6 +19,13 @@ object Main {
     val system = ActorSystem("MySystem")
     val mainActor = system.actorOf(Props[MainActor], name = "mainActor")
     mainActor ! StartMain
+    Iterator.continually(Console.readLine).takeWhile(_ != "exit").foreach(line => line match {
+      case "stop" =>
+        mainActor ! StopMain
+        sys.exit(1)
+      case _ =>
+    })
+
 
     //    Login.getPage("""d:\ticket\head\loginpage.har""")
 

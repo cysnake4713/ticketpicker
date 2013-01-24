@@ -1,13 +1,11 @@
 package com.cysnake.ticket.actor
 
-import akka.actor.{OneForOneStrategy, SupervisorStrategy, ActorLogging, Actor}
+import akka.actor.{ActorLogging, Actor}
 import com.cysnake.har.HarEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.json.{JSONTokener, JSONObject}
 import java.io._
-import org.apache.http.util.EntityUtils
 
-import akka.pattern.ask
 import akka.util.Timeout
 import akka.util.duration._
 import org.apache.http.{NameValuePair, HttpStatus}
@@ -16,8 +14,6 @@ import org.apache.http.client.entity.UrlEncodedFormEntity
 import com.cysnake.ticket.actor.CodeActor.ReturnCodeResult
 import com.cysnake.ticket.actor.CodeActor.GetCode
 import java.util
-import akka.actor.SupervisorStrategy.Restart
-import java.lang.reflect.UndeclaredThrowableException
 
 //import com.cysnake.ticket.ui.CodeFrame
 
@@ -46,19 +42,58 @@ class LoginActor extends Actor with ActorLogging {
 
   def receive = {
 
+    case Response(response, httpRequest, requestFrom) => {
+      requestFrom match {
+        case GetCookie => {
+          log.debug("status:" + response.getStatusLine)
+          httpRequest.releaseConnection()
+          self ! GetLoginCode
+        }
+        case LoginFirst(code) => {
+          log.debug("status: " + response.getStatusLine)
+          if (response.getStatusLine.getStatusCode == HttpStatus.SC_OK) {
+            val entity = response.getEntity
+            val CharsetPattern = """.*charset=(.*)""".r
+            val charset = entity.getContentType.getValue match {
+              case CharsetPattern(w) => w
+            }
+            //            log.debug("entity:" + EntityUtils.toString(entity))
+            val json = new JSONObject(new JSONTokener(new InputStreamReader(entity.getContent, charset)))
+            //      httpPost.releaseConnection()
+            val rand = json.get("loginRand").asInstanceOf[String]
+            log.debug("rand number is: " + rand)
+            httpRequest.releaseConnection()
+            self ! LoginSecond(code, rand)
+          } else {
+            throw new LoginException("unable to get login rand value!!")
+          }
+        }
+
+        case LoginSecond(code, rand) => {
+          httpRequest.releaseConnection()
+          self ! IsLogin
+        }
+        case IsLogin => {
+          log.debug("response status:" + response.getStatusLine)
+          log.debug("content long: " + response.getEntity.getContentLength)
+          if (response.getEntity.getContentLength != 0) {
+            log.debug("IsLogin result:success")
+            context.parent ! LoginSuccess
+            httpRequest.releaseConnection()
+          } else {
+            log.debug("login result: failure!!")
+            throw new LoginException("login validate is failure!")
+          }
+        }
+      }
+    }
 
     case GetCookie => {
       log.debug("GetCookie")
       val path = """/head/getCookie.har"""
       val har = new HarEntity(path)
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
-      (socketActor ? Request(httpGet)).mapTo[Response] onSuccess {
-        case Response(response) => {
-          log.debug("status:" + response.getStatusLine)
-          httpGet.releaseConnection()
-          self ! GetLoginCode
-        }
-      }
+      socketActor ! Request(httpGet, GetCookie)
 
     }
 
@@ -77,27 +112,7 @@ class LoginActor extends Actor with ActorLogging {
       val path = """/head/loginAction.do.har"""
       val har = new HarEntity(path)
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
-      (socketActor ? Request(httpPost)).mapTo[Response] onSuccess {
-        case Response(response) => {
-          log.debug("status: " + response.getStatusLine)
-          if (response.getStatusLine.getStatusCode == HttpStatus.SC_OK) {
-            val entity = response.getEntity
-            val CharsetPattern = """.*charset=(.*)""".r
-            val charset = entity.getContentType.getValue match {
-              case CharsetPattern(w) => w
-            }
-            val json = new JSONObject(new JSONTokener(new InputStreamReader(entity.getContent, charset)))
-            EntityUtils.consume(entity)
-            //      httpPost.releaseConnection()
-            val rand = json.get("loginRand").asInstanceOf[String]
-            log.debug("rand number is: " + rand)
-            httpPost.releaseConnection()
-            self ! LoginSecond(code, rand)
-          } else {
-            self ! ThrowExecption
-          }
-        }
-      }
+      socketActor ! Request(httpPost, LoginFirst(code))
     }
 
     case LoginSecond(code, rand) => {
@@ -117,12 +132,7 @@ class LoginActor extends Actor with ActorLogging {
       formParams add new BasicNameValuePair("randCode", code)
       val entity = new UrlEncodedFormEntity(formParams, "UTF-8")
       httpPost.setEntity(entity)
-      (socketActor ? Request(httpPost)).mapTo[Response] onSuccess {
-        case Response(response) => {
-          httpPost.releaseConnection()
-          self ! IsLogin
-        }
-      }
+      socketActor ! Request(httpPost, LoginSecond(code, rand))
     }
 
 
@@ -131,30 +141,14 @@ class LoginActor extends Actor with ActorLogging {
       val path = "/head/ticketPassCode.do.har"
       val har = new HarEntity(path)
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
-      (socketActor ? Request(httpGet)).mapTo[Response] onSuccess {
-        case Response(response) => {
-          log.debug("response status:" + response.getStatusLine)
-          log.debug("content long: " + response.getEntity.getContentLength)
-          if (response.getEntity.getContentLength != 0) {
-            log.debug("IsLogin result:success")
-            context.parent ! LoginSuccess
-            httpGet.releaseConnection()
-          } else {
-            log.debug("login result: failure!!")
-            self ! ThrowExecption
-          }
-        }
-      }
+      socketActor ! Request(httpGet, IsLogin)
     }
-    case ThrowExecption => throw new LoginException("unable to login!!")
 
   }
 }
 
 
 object LoginActor {
-
-  case class ThrowExecption()
 
   case class LoginException(msg: String) extends RuntimeException(msg)
 

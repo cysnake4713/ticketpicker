@@ -47,7 +47,7 @@ class HarEntity {
     var headerBuilder = mutable.ArrayBuilder.make[Header]
     for (i <- 0 to headers.length - 1) {
       val headerJson = headers.getJSONObject(i)
-      if (("Content-Length".equalsIgnoreCase(headerJson.get("name").toString) &&
+      if (!("Content-Length".equalsIgnoreCase(headerJson.get("name").toString) ||
         "Cookie".equalsIgnoreCase(headerJson.get("name").toString)))
         headerBuilder += new HeaderImpl(headerJson.get("name").toString, headerJson.get("value").toString)
     }

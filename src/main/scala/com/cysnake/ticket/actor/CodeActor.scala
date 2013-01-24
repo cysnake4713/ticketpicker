@@ -5,8 +5,6 @@ import com.cysnake.har.HarEntity
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.util.EntityUtils
 import org.apache.http.HttpStatus
-import akka.pattern.ask
-import akka.util.Timeout
 import akka.util.duration._
 import scala.Predef._
 import com.cysnake.ticket.actor.CodeActor.{ReturnCodeResult, GetCode}
@@ -28,9 +26,6 @@ import java.awt.Dimension
 
 class CodeActor extends Actor with ActorLogging {
 
-
-  implicit val timeout = Timeout(10 seconds)
-
   import com.cysnake.ticket.actor.SocketActor._
 
 
@@ -46,29 +41,30 @@ class CodeActor extends Actor with ActorLogging {
   }
 
   def receive = {
-    case GetCode(path: String, sourceActor) => {
-
-      val har = new HarEntity(path)
-      val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
-
-      val socket = context.actorFor("/user/mainActor/socketActor")
-      log.debug(self + "send request to socketActor")
-      (socket ? Request(httpGet)).mapTo[Response] onSuccess {
-        case Response(response) => {
-          log.debug("response status: " + response.getStatusLine)
+    case Response(response, httpRequest, requestType) => {
+      requestType match {
+        case GetCode(path, sourceActor) => {
           if (response.getStatusLine.getStatusCode == HttpStatus.SC_OK) {
             val entity = response.getEntity
             val stream = entity.getContent
             CodeDialog.start(entity.getContent, sourceActor)
             EntityUtils.consume(entity)
             stream.close()
-            httpGet.releaseConnection()
+            httpRequest.releaseConnection()
           } else {
             //TODO
           }
         }
       }
+    }
 
+    case GetCode(path: String, sourceActor) => {
+
+      val har = new HarEntity(path)
+      val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
+      val socket = context.actorFor("/user/mainActor/socketActor")
+      log.debug(self + "send request to socketActor")
+      socket ! Request(httpGet, GetCode(path, sourceActor))
     }
   }
 

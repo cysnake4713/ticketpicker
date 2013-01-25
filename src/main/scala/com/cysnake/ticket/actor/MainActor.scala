@@ -6,7 +6,7 @@ import akka.util.Timeout
 import akka.actor.SupervisorStrategy.{Stop, Restart}
 import akka.event.LoggingReceive
 import com.cysnake.ticket.actor.SearchActor._
-import com.cysnake.ticket.actor.CommitActor.FinalCommit
+import com.cysnake.ticket.actor.CommitActor.{FirstCommit, FinalCommit}
 import com.cysnake.ticket.actor.CodeActor.{ReturnCodeResult, GetCode}
 import com.cysnake.ticket.po.TicketPO
 
@@ -33,12 +33,11 @@ class MainActor extends Actor with ActorLogging {
 
   implicit val timeout = Timeout(10 seconds)
 
+  val codeActor = context.actorOf(Props[CodeActor], name = "codeActor")
   val loginActor = context.watch(context.actorOf(Props[LoginActor], name = "loginActor"))
   val socketActor = context.watch(context.actorOf(Props[SocketActor], name = "socketActor"))
-  val codeActor = context.actorOf(Props[CodeActor], name = "codeActor")
   val searchActor = context.watch(context.actorOf(Props[SearchActor], name = "searchActor"))
   val commitActor = context.watch(context.actorOf(Props[CommitActor], name = "commitActor"))
-  var ticketTemp: TicketPO = null
 
   override def receive: Receive = LoggingReceive {
     case StartMain => {
@@ -50,16 +49,10 @@ class MainActor extends Actor with ActorLogging {
     }
 
     case SearchSuccess(ticket) => {
-      ticketTemp = ticket
       log.info("searchSuccess")
-      codeActor ! GetCode("/head/ticketPassCode.do.har", self)
-
-      //      commitActor ! FinalCommit(ticket)
+      commitActor ! FirstCommit(ticket)
     }
 
-    case ReturnCodeResult(code) => {
-      commitActor ! FinalCommit(ticketTemp, code)
-    }
 
     case ReceiveTimeout => {
       log.debug("receive timeout. shutdown now.")

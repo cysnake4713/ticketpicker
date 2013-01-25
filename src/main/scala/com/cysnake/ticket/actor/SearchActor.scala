@@ -52,14 +52,15 @@ class SearchActor extends Actor with ActorLogging {
             ticketPO.date = (xml \ "ticket" \ "date").text
             ticketPO.time = (xml \ "ticket" \ "time").text
             ticketPO.seat = (xml \ "ticket" \ "seat").text
-            ticketPO.passengerName = (xml \ "ticket" \ "seat" \ "passenger" \ "name").text
-            ticketPO.passengerId = (xml \ "ticket" \ "seat" \ "passenger" \ "id").text
-            ticketPO.passengerPhone = (xml \ "ticket" \ "seat" \ "passenger" \ "phone").text
+            ticketPO.passengerName = (xml \ "ticket" \ "passenger" \ "name").text
+            ticketPO.passengerId = (xml \ "ticket" \ "passenger" \ "id").text
+            ticketPO.passengerPhone = (xml \ "ticket" \ "passenger" \ "phone").text
             val values = getArray(context1, ticketPO.trainName)
             ticketPO.fromName = values(7)
             ticketPO.toName = values(8)
             ticketPO.startTime = values(2)
             ticketPO.endTime = values(6)
+            ticketPO.trainCode = values(3)
 
             val formParams = new util.ArrayList[NameValuePair]
             formParams add new BasicNameValuePair("station_train_code", ticketPO.trainName)

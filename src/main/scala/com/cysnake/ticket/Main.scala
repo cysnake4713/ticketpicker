@@ -22,7 +22,7 @@ object Main {
     Iterator.continually(Console.readLine).takeWhile(_ != "exit").foreach(line => line match {
       case "stop" =>
         mainActor ! StopMain
-        sys.exit(1)
+        sys.exit(0)
       case _ =>
     })
 

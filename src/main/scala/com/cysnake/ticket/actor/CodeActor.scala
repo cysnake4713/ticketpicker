@@ -48,8 +48,6 @@ class CodeActor extends Actor with ActorLogging {
             val entity = response.getEntity
             val stream = entity.getContent
             CodeDialog.start(entity.getContent, sourceActor)
-            EntityUtils.consume(entity)
-            stream.close()
             httpRequest.releaseConnection()
           } else {
             //TODO

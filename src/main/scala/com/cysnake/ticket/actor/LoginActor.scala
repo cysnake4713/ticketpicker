@@ -14,6 +14,8 @@ import org.apache.http.client.entity.UrlEncodedFormEntity
 import com.cysnake.ticket.actor.CodeActor.ReturnCodeResult
 import com.cysnake.ticket.actor.CodeActor.GetCode
 import java.util
+import javax.swing.ImageIcon
+import javax.imageio.ImageIO
 
 //import com.cysnake.ticket.ui.CodeFrame
 
@@ -76,21 +78,26 @@ class LoginActor extends Actor with ActorLogging {
         case IsLogin => {
           log.debug("response status:" + response.getStatusLine)
           log.debug("content long: " + response.getEntity.getContentLength)
-          if (response.getEntity.getContentLength != 0) {
-            log.debug("IsLogin result:success")
-            context.parent ! LoginSuccess
-            httpRequest.releaseConnection()
-          } else {
-            log.debug("login result: failure!!")
-            throw new LoginException("login validate is failure!")
+          try {
+            new ImageIcon(ImageIO.read(response.getEntity.getContent))
+          } catch {
+            case e: Exception =>
+              log.info("unable to login, retry ------------->")
+              throw new LoginException("login validate is failure!")
           }
+          finally {
+            httpRequest.releaseConnection()
+          }
+          log.debug("IsLogin result:success")
+          context.parent ! LoginSuccess
+
         }
       }
     }
 
     case GetCookie => {
       log.debug("GetCookie")
-      val path = """/head/getCookie.har"""
+      val path = "/head/getOrderPage.har"
       val har = new HarEntity(path)
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
       socketActor ! Request(httpGet, GetCookie)

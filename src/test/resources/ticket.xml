@@ -2,10 +2,8 @@
     <ticket>
         <from>GGQ</from>
         <to>SZQ</to>
-        <train>G6013</train>
+        <train>D7012</train>
         <date>2013-01-31</date>
         <time>00:00--24:00</time>
-        <seat>8</seat>
-        <!--<seat>8</seat> 二等软座  -->
     </ticket>
 </tickets>

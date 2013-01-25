@@ -19,9 +19,10 @@ class MainActor extends Actor with ActorLogging {
   import com.cysnake.ticket.actor.MainActor._
   import com.cysnake.ticket.actor.LoginActor._
 
-  override val supervisorStrategy = OneForOneStrategy(maxNrOfRetries = 4, withinTimeRange = 60 seconds) {
+  override val supervisorStrategy = OneForOneStrategy(maxNrOfRetries = 4, withinTimeRange = 20 seconds) {
     case _: LoginActor.LoginException => Restart
     case _: SocketActor.SocketException => Restart
+    case _: SearchTrainMatchException => Restart
     case _: Exception => Stop
   }
 
@@ -43,6 +44,11 @@ class MainActor extends Actor with ActorLogging {
       searchActor ! SearchAllTrain
     }
 
+    case SearchSuccess(ticket) => {
+      log.debug("searchSuccess")
+      context.system.shutdown()
+    }
+
     case ReceiveTimeout => {
       log.debug("receive timeout. shutdown now.")
       context.system.shutdown()
@@ -52,13 +58,22 @@ class MainActor extends Actor with ActorLogging {
     case Terminated(actorRef) if actorRef == loginActor =>
       log.debug("loginActor terminated. shutdown now.")
       context.system.shutdown()
+      sys.exit(0)
 
-    case Terminated => {
+    case Terminated(actorRef) if actorRef == searchActor =>
+      log.debug("searchActor terminated. shutdown now.")
+      context.system.shutdown()
+      sys.exit(0)
+
+    case Terminated(actorRef) => {
       log.debug("shit happens")
       context.system.shutdown()
+      sys.exit(0)
     }
 
-    case StopMain => context.system.shutdown()
+    case StopMain =>
+      context.system.shutdown()
+      sys.exit(0)
 
     case _ => log.error(self + "match error")
 

@@ -14,10 +14,12 @@ import xml.XML
 class TestRegx extends WordSpec with MustMatchers with BeforeAndAfterAll {
 
   var target: String = null
+  var tokenContext: String = null
 
   override protected def beforeAll() {
     super.beforeAll()
     target = scala.io.Source.fromURL(getClass.getResource("/testfile/test.html"), "utf-8").mkString("")
+    tokenContext = scala.io.Source.fromURL(getClass.getResource("/testfile/test-token.html"), "utf-8").mkString("")
   }
 
   "Target" must {
@@ -33,7 +35,8 @@ class TestRegx extends WordSpec with MustMatchers with BeforeAndAfterAll {
       val trainNum = (xml \ "ticket" \ "train").text
       println("train num: " + trainNum)
       for (re <- result) {
-        if (re.contains(trainNum)) {
+        val regxIsThisLine = (""".*onmouseout=\'onStopOut\(\)\'\>""" + trainNum + """\<\/span\>.*""").r
+        if (!regxIsThisLine.findFirstMatchIn(re).isEmpty) {
           trainLine = re
         }
       }
@@ -42,11 +45,50 @@ class TestRegx extends WordSpec with MustMatchers with BeforeAndAfterAll {
 
       val regx2 = """.*javascript:getSelected\(\'(.*)\'\).*""".r
       val temp = trainLine match {
-        case regx2(key) => key
+        case regx2(value) => value
       }
-      for (va <- temp.split("#")) {
-        println("final: " + va)
-      }
+      //      for (va <- temp.split("#")) {
+      //        println("final: " + va)
+      //      }
     }
+  }
+
+
+  "Token" must {
+    "read success" in {
+      println("length:" + tokenContext.length)
+      assert(tokenContext.length > 0)
+    }
+
+    "regx token" in {
+      val tokenRegx = """.*name\=\"org\.apache\.struts\.taglib\.html\.TOKEN\"\s*value\=\"(\w{32})\"\>.*""".r
+      val token = tokenContext match {
+        case tokenRegx(value) => value
+        case _ => ""
+      }
+      println("token is: " + token)
+      assert(token != "")
+    }
+
+    "regx leftticket" in {
+      val leftTicketRegx = """.*name=\"leftTicketStr\"\s*id=\"left\_ticket\"\s*value\=\"(\w{30})\".*""".r
+      val leftTicket = tokenContext match {
+        case leftTicketRegx(value) => value
+        case _ => ""
+      }
+      println(("left ticket: " + leftTicket))
+      assert(leftTicket != "")
+    }
+
+    "regx trainNum" in {
+      val trainNumRegx = """.*orderRequest\.train\_no\"\s*value\=\"(\w*)\".*""".r
+      val trainNum = tokenContext match {
+        case trainNumRegx(value) => value
+        case _ => ""
+      }
+      println("train num is: " + trainNum)
+      assert(trainNum != "")
+    }
+
   }
 }

@@ -17,6 +17,7 @@ import org.apache.http.message.BasicNameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.util.EntityUtils
 import java.io.FileWriter
+import com.cysnake.ticket.po.TicketPO
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -30,66 +31,129 @@ class SearchActor extends Actor with ActorLogging {
   val socketActor = context.actorFor("/user/mainActor/socketActor")
   val xml = XML.load(getClass.getResource("/ticket.xml"))
 
+  override def postRestart(reason: Throwable) {
+    super.postRestart(reason)
+    self ! SearchAllTrain
+  }
+
   override def receive: Receive = {
 
     case Response(response, httpRequest, requestType) => {
       requestType match {
         case SearchAllTrain => {
           //          response.getEntity.get
-          val context = scala.io.Source.fromInputStream(response.getEntity.getContent, "UTF-8")
+          val context1 = scala.io.Source.fromInputStream(response.getEntity.getContent, "UTF-8")
             .getLines().mkString("")
-          val trainNum = (xml \ "ticket" \ "train").text
+          try {
+            val ticketPO = new TicketPO
+            ticketPO.trainName = (xml \ "ticket" \ "train").text
+            ticketPO.fromCode = (xml \ "ticket" \ "from").text
+            ticketPO.toCode = (xml \ "ticket" \ "to").text
+            ticketPO.date = (xml \ "ticket" \ "date").text
+            ticketPO.time = (xml \ "ticket" \ "time").text
+            val values = getArray(context1, ticketPO.trainName)
+            ticketPO.fromName = values(7)
+            ticketPO.toName = values(8)
 
-          val values = getArray(context, trainNum)
-
-          val formParams = new util.ArrayList[NameValuePair]
-          formParams add new BasicNameValuePair("station_train_code", trainNum)
-          formParams add new BasicNameValuePair("train_date", (xml \ "ticket" \ "date").text)
-          formParams add new BasicNameValuePair("seattype_num", "")
-          formParams add new BasicNameValuePair("from_station_telecode", (xml \ "ticket" \ "from").text)
-          formParams add new BasicNameValuePair("to_station_telecode", (xml \ "ticket" \ "to").text)
-          formParams add new BasicNameValuePair("include_student", "00")
-          formParams add new BasicNameValuePair("from_station_telecode_name", values(7))
-          formParams add new BasicNameValuePair("to_station_telecode_name", values(8))
-          formParams add new BasicNameValuePair("round_train_date", (xml \ "ticket" \ "date").text)
-          formParams add new BasicNameValuePair("round_start_time_str", (xml \ "ticket" \ "time").text)
-          formParams add new BasicNameValuePair("single_round_type", "1")
-          formParams add new BasicNameValuePair("train_pass_type", "QB")
-          formParams add new BasicNameValuePair("train_class_arr", "QB#D#Z#T#K#QT#")
-          formParams add new BasicNameValuePair("start_time_str", (xml \ "ticket" \ "time").text)
-          formParams add new BasicNameValuePair("lishi", values(1))
-          formParams add new BasicNameValuePair("train_start_time", values(2))
-          formParams add new BasicNameValuePair("trainno4", values(3))
-          formParams add new BasicNameValuePair("arrive_time", values(6))
-          formParams add new BasicNameValuePair("from_station_name", values(7))
-          formParams add new BasicNameValuePair("to_station_name", values(8))
-          formParams add new BasicNameValuePair("from_station_no", values(9))
-          formParams add new BasicNameValuePair("to_station_no", values(10))
-          formParams add new BasicNameValuePair("ypInfoDetail", values(11))
-          formParams add new BasicNameValuePair("mmStr", values(12))
-          formParams add new BasicNameValuePair("locationCode", values(13))
-          val entity = new UrlEncodedFormEntity(formParams, "UTF-8")
-          self ! PreOrder(entity)
+            val formParams = new util.ArrayList[NameValuePair]
+            formParams add new BasicNameValuePair("station_train_code", ticketPO.trainName)
+            formParams add new BasicNameValuePair("train_date", ticketPO.date)
+            formParams add new BasicNameValuePair("seattype_num", "")
+            formParams add new BasicNameValuePair("from_station_telecode", ticketPO.fromCode)
+            formParams add new BasicNameValuePair("to_station_telecode", ticketPO.toCode)
+            formParams add new BasicNameValuePair("include_student", "00")
+            formParams add new BasicNameValuePair("from_station_telecode_name", ticketPO.fromName)
+            formParams add new BasicNameValuePair("to_station_telecode_name", ticketPO.toName)
+            formParams add new BasicNameValuePair("round_train_date", ticketPO.date)
+            formParams add new BasicNameValuePair("round_start_time_str", ticketPO.time)
+            formParams add new BasicNameValuePair("single_round_type", "1")
+            formParams add new BasicNameValuePair("train_pass_type", "QB")
+            formParams add new BasicNameValuePair("train_class_arr", "QB#D#Z#T#K#QT#")
+            formParams add new BasicNameValuePair("start_time_str", ticketPO.time)
+            formParams add new BasicNameValuePair("lishi", values(1))
+            formParams add new BasicNameValuePair("train_start_time", values(2))
+            formParams add new BasicNameValuePair("trainno4", values(3))
+            formParams add new BasicNameValuePair("arrive_time", values(6))
+            formParams add new BasicNameValuePair("from_station_name", ticketPO.fromName)
+            formParams add new BasicNameValuePair("to_station_name", ticketPO.toName)
+            formParams add new BasicNameValuePair("from_station_no", values(9))
+            formParams add new BasicNameValuePair("to_station_no", values(10))
+            formParams add new BasicNameValuePair("ypInfoDetail", values(11))
+            formParams add new BasicNameValuePair("mmStr", values(12))
+            formParams add new BasicNameValuePair("locationCode", values(13))
+            val entity = new UrlEncodedFormEntity(formParams, "UTF-8")
+            self ! PreOrder(entity, ticketPO)
+          } catch {
+            case ex: UnOrderAble => self ! SearchAllTrain
+            case ex: Exception => throw ex
+          }
         }
 
-        case PreOrder => {
-          println(response.getStatusLine)
-          val result = EntityUtils.toString(response.getEntity)
-          val file = new FileWriter("D:/ticket/test.html")
-          file.write(result)
-          file.close()
+        case PreOrder(entity, ticket) => {
+          // TODO: when failure what do you do and how you define failure
+          //         println(response.getStatusLine)
+          //          val result = EntityUtils.toString(response.getEntity)
+          //          val file = new FileWriter("D:/ticket/test.html")
+          //          file.write(result)
+          //          file.close()
+          httpRequest.releaseConnection()
+          self ! GetOrderPage(ticket)
 
+        }
+
+        case GetOrderPage(ticket) => {
+          log.info("get order Page here ")
+          val contextResponse = scala.io.Source.fromInputStream(response.getEntity.getContent, "UTF-8")
+            .getLines().mkString("")
+
+          val tokenRegx = """.*name\=\"org\.apache\.struts\.taglib\.html\.TOKEN\"\s*value\=\"(\w{32})\"\>.*""".r
+          val token = contextResponse match {
+            case tokenRegx(value) => value
+            case _ => ""
+          }
+          val leftTicketRegx = """.*name=\"leftTicketStr\"\s*id=\"left\_ticket\"\s*value\=\"(\w{30})\".*""".r
+          val leftTicket = contextResponse match {
+            case leftTicketRegx(value) => value
+            case _ => ""
+          }
+          log.debug("token is: " + token + " left token is: " + leftTicket)
+          if (token != "" && leftTicket != "") {
+            ticket.token = token
+            ticket.leftTiketToken = leftTicket
+            context.parent ! SearchSuccess(ticket)
+
+          } else {
+            log.info("can't get order page, retry ------------------")
+            self ! SearchAllTrain
+          }
+
+
+
+
+          //          val file = new FileWriter("D:/ticket/test" + i + ".html")
+          //          i += 1
+          //          file.write(context1)
+          //          file.close()
+          httpRequest.releaseConnection()
+          //          context.system.shutdown()
         }
       }
     }
 
-    case PreOrder(entity) => {
+    case GetOrderPage(ticket) => {
+      val path = """/head/getOrderPage.har"""
+      val har = new HarEntity(path)
+      val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
+      socketActor ! Request(httpGet, GetOrderPage(ticket))
+    }
+
+    case PreOrder(entity, ticket) => {
       log.debug("preOrder")
       val path = """/head/search-commit.har"""
       val har = new HarEntity(path)
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
       httpPost.setEntity(entity)
-      socketActor ! Request(httpPost, PreOrder)
+      socketActor ! Request(httpPost, PreOrder(entity, ticket))
     }
 
     case SearchAllTrain => {
@@ -124,26 +188,46 @@ class SearchActor extends Actor with ActorLogging {
 
   }
 
+  //  @throws(classOf[SearchTrainMatchException], classOf[UnOrderAble])
   private def getArray(source: String, trainNum: String): Array[String] = {
     val regx = """<span()"""
     val result = source.split(regx)
     var trainLine = ""
-    for (re <- result) trainLine = re
-    log.debug("match line is :" + trainLine)
-
-    val regx2 = """.*javascript:getSelected\(\'(.*)\'\).*""".r
-    val temp = trainLine match {
-      case regx2(key) => key
+    for (re <- result) {
+      val regxIsThisLine = (""".*onmouseout=\'onStopOut\(\)\'\>""" + trainNum + """\<\/span\>.*""").r
+      if (!regxIsThisLine.findFirstMatchIn(re).isEmpty) {
+        trainLine = re
+      }
     }
-    temp.split("#")
+    log.debug("match line is :" + trainLine)
+    if (trainLine != "") {
+      val regx2 = """.*javascript:getSelected\(\'(.*)\'\).*""".r
+      val temp = trainLine match {
+        case regx2(key) => key
+        case _ =>
+          log.info("this train is out of order!!, retry ----->")
+          throw new UnOrderAble("this train is out of order!!, retry ----->")
+      }
+      temp.split("#")
+    } else {
+      throw new SearchTrainMatchException("not find match train!! seems error here!")
+    }
   }
 
 }
 
 object SearchActor {
 
-  case class PreOrder(entity: UrlEncodedFormEntity)
+  case class PreOrder(entity: UrlEncodedFormEntity, ticket: TicketPO)
 
   case class SearchAllTrain()
+
+  case class GetOrderPage(ticket: TicketPO)
+
+  case class SearchTrainMatchException(msg: String) extends RuntimeException(msg)
+
+  case class UnOrderAble(msg: String) extends RuntimeException(msg)
+
+  case class SearchSuccess(ticket: TicketPO)
 
 }

@@ -18,6 +18,10 @@ class TicketPO {
   var time: String = ""
   var token: String = ""
   var leftTiketToken: String = ""
-  var seat:String =""
-
+  var seat: String = ""
+  var startTime: String = ""
+  var endTime: String = ""
+  var passengerName: String = ""
+  var passengerId: String = ""
+  var passengerPhone: String = ""
 }

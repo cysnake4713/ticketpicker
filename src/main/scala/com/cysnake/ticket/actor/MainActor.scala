@@ -6,6 +6,9 @@ import akka.util.Timeout
 import akka.actor.SupervisorStrategy.{Stop, Restart}
 import akka.event.LoggingReceive
 import com.cysnake.ticket.actor.SearchActor._
+import com.cysnake.ticket.actor.CommitActor.FinalCommit
+import com.cysnake.ticket.actor.CodeActor.{ReturnCodeResult, GetCode}
+import com.cysnake.ticket.po.TicketPO
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -34,6 +37,8 @@ class MainActor extends Actor with ActorLogging {
   val socketActor = context.watch(context.actorOf(Props[SocketActor], name = "socketActor"))
   val codeActor = context.actorOf(Props[CodeActor], name = "codeActor")
   val searchActor = context.watch(context.actorOf(Props[SearchActor], name = "searchActor"))
+  val commitActor = context.watch(context.actorOf(Props[CommitActor], name = "commitActor"))
+  var ticketTemp: TicketPO = null
 
   override def receive: Receive = LoggingReceive {
     case StartMain => {
@@ -45,8 +50,15 @@ class MainActor extends Actor with ActorLogging {
     }
 
     case SearchSuccess(ticket) => {
-      log.debug("searchSuccess")
-      context.system.shutdown()
+      ticketTemp = ticket
+      log.info("searchSuccess")
+      codeActor ! GetCode("/head/ticketPassCode.do.har", self)
+
+      //      commitActor ! FinalCommit(ticket)
+    }
+
+    case ReturnCodeResult(code) => {
+      commitActor ! FinalCommit(ticketTemp, code)
     }
 
     case ReceiveTimeout => {

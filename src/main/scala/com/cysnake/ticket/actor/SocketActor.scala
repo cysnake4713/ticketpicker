@@ -3,7 +3,7 @@ package com.cysnake.ticket.actor
 import akka.actor.{ActorLogging, Actor}
 import com.cysnake.ticket.http.HttpsUtil
 import org.apache.http.client.methods.{HttpPost, HttpRequestBase}
-import org.apache.http.HttpResponse
+import org.apache.http.{NameValuePair, HttpResponse}
 import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.client.utils.URLEncodedUtils
 
@@ -30,7 +30,7 @@ class SocketActor extends Actor with ActorLogging {
 
     case Request(httpRequest: HttpRequestBase, requestType: ScalaObject) => {
       log.debug("get request from:" + sender)
-      log.debug("request url:" + httpRequest.getURI)
+      log.debug("-------------------request url: %s----------------------" format httpRequest.getURI)
       log.debug("request method:" + httpRequest.getMethod)
       //      log.debug("request param:" + httpRequest.getParams)
       val headers = httpRequest.getAllHeaders
@@ -39,16 +39,23 @@ class SocketActor extends Actor with ActorLogging {
       }
       if (httpRequest.isInstanceOf[HttpPost]) {
         val entity = httpRequest.asInstanceOf[HttpPost].getEntity
-        val requestValues = URLEncodedUtils.parse(entity)
+        val requestValues: java.util.List[NameValuePair] = URLEncodedUtils.parse(entity)
         log.debug("request form: " + requestValues)
       }
       log.debug("cookis is :" + httpClient.asInstanceOf[DefaultHttpClient].getCookieStore.getCookies)
       try {
         val response = httpClient.execute(httpRequest)
         log.info("reponse status: " + response.getStatusLine)
+        if (response.getEntity != null) {
+          log.debug("response content type: %s" format response.getEntity.getContentType)
+          log.debug("response content length: %d" format response.getEntity.getContentLength)
+          log.debug("response content encoding: %s" format response.getEntity.getContentEncoding)
+        }
         sender ! Response(response, httpRequest, requestType)
       } catch {
-        case e: Exception => throw new SocketActor.SocketException(httpRequest, requestType)
+        case e: Exception =>
+          log.error(e, "socket error!>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+          throw new SocketActor.SocketException(httpRequest, requestType)
       }
 
     }

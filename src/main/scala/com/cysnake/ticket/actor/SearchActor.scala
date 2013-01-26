@@ -7,7 +7,7 @@ import org.apache.http.client.methods.{HttpPost, HttpGet}
 import org.json.{JSONArray, JSONObject}
 import scala.collection.mutable
 import xml.XML
-import java.net.URI
+import java.net.{URLEncoder, URI}
 import com.cysnake.ticket.actor.SocketActor.{Response, Request}
 import akka.util.Timeout
 import akka.util.duration._
@@ -15,9 +15,8 @@ import java.util
 import org.apache.http.NameValuePair
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
-import org.apache.http.util.EntityUtils
-import java.io.FileWriter
 import com.cysnake.ticket.po.TicketPO
+import org.apache.http.util.EntityUtils
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -29,7 +28,7 @@ import com.cysnake.ticket.po.TicketPO
 class SearchActor extends Actor with ActorLogging {
   implicit val timeout = Timeout(10 seconds)
   val socketActor = context.actorFor("/user/mainActor/socketActor")
-  val xml = XML.load(getClass.getResource("/ticket.xml"))
+  var ticketPO: TicketPO = null
 
   override def postRestart(reason: Throwable) {
     super.postRestart(reason)
@@ -42,26 +41,17 @@ class SearchActor extends Actor with ActorLogging {
       requestType match {
         case SearchAllTrain => {
           //          response.getEntity.get
-          val context1 = scala.io.Source.fromInputStream(response.getEntity.getContent, "UTF-8")
-            .getLines().mkString("")
+          //          val context1 = scala.io.Source.fromInputStream(response.getEntity.getContent, "UTF-8")
+          //            .getLines().mkString("")
+          val context1 = EntityUtils.toString(response.getEntity)
           try {
-            val ticketPO = new TicketPO
-            ticketPO.trainName = (xml \ "ticket" \ "train").text
-            ticketPO.fromCode = (xml \ "ticket" \ "from").text
-            ticketPO.toCode = (xml \ "ticket" \ "to").text
-            ticketPO.date = (xml \ "ticket" \ "date").text
-            ticketPO.time = (xml \ "ticket" \ "time").text
-            ticketPO.seat = (xml \ "ticket" \ "seat").text
-            ticketPO.passengerName = (xml \ "ticket" \ "passenger" \ "name").text
-            ticketPO.passengerId = (xml \ "ticket" \ "passenger" \ "id").text
-            ticketPO.passengerPhone = (xml \ "ticket" \ "passenger" \ "phone").text
+            //TODO
             val values = getArray(context1, ticketPO.trainName)
             ticketPO.fromName = values(7)
             ticketPO.toName = values(8)
             ticketPO.startTime = values(2)
             ticketPO.endTime = values(6)
             ticketPO.trainCode = values(3)
-
             val formParams = new util.ArrayList[NameValuePair]
             formParams add new BasicNameValuePair("station_train_code", ticketPO.trainName)
             formParams add new BasicNameValuePair("train_date", ticketPO.date)
@@ -148,7 +138,7 @@ class SearchActor extends Actor with ActorLogging {
     }
 
     case GetOrderPage(ticket) => {
-      val path = """/head/getOrderPage.har"""
+      val path = "/head/getCookie.harar"
       val har = new HarEntity(path)
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
       socketActor ! Request(httpGet, GetOrderPage(ticket))
@@ -176,11 +166,11 @@ class SearchActor extends Actor with ActorLogging {
         queryMap += queryJson.get("name").toString -> queryJson.get("value").toString
       }
       //set ticket information
-
-      queryMap("orderRequest.from_station_telecode") = (xml \ "ticket" \ "from").text
-      queryMap("orderRequest.to_station_telecode") = (xml \ "ticket" \ "to").text
-      queryMap("orderRequest.train_date") = (xml \ "ticket" \ "date").text
-      queryMap("orderRequest.start_time_str") = (xml \ "ticket" \ "time").text
+      //TODO:
+      //      queryMap("orderRequest.from_station_telecode") = (xml \ "ticket" \ "from").text
+      //      queryMap("orderRequest.to_station_telecode") = (xml \ "ticket" \ "to").text
+      //      queryMap("orderRequest.train_date") = (xml \ "ticket" \ "date").text
+      //      queryMap("orderRequest.start_time_str") = URLEncoder.encode((xml \ "ticket" \ "time").text)
 
       //add queryString to url
       val queryValue = ("" /: queryMap) {
@@ -198,6 +188,7 @@ class SearchActor extends Actor with ActorLogging {
   //  @throws(classOf[SearchTrainMatchException], classOf[UnOrderAble])
   private def getArray(source: String, trainNum: String): Array[String] = {
     val regx = """<span()"""
+    log.debug("source is: " + source)
     val result = source.split(regx)
     var trainLine = ""
     for (re <- result) {

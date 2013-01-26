@@ -6,9 +6,8 @@ import akka.util.Timeout
 import akka.actor.SupervisorStrategy.{Stop, Restart}
 import akka.event.LoggingReceive
 import com.cysnake.ticket.actor.SearchActor._
-import com.cysnake.ticket.actor.CommitActor.{FirstCommit, FinalCommit}
-import com.cysnake.ticket.actor.CodeActor.{ReturnCodeResult, GetCode}
-import com.cysnake.ticket.po.TicketPO
+import com.cysnake.ticket.actor.CommitActor.FirstCommit
+import com.cysnake.ticket.po.{AccountPO, TicketPO}
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -22,7 +21,7 @@ class MainActor extends Actor with ActorLogging {
   import com.cysnake.ticket.actor.MainActor._
   import com.cysnake.ticket.actor.LoginActor._
 
-  override val supervisorStrategy = OneForOneStrategy(maxNrOfRetries = 4, withinTimeRange = 20 seconds) {
+  override val supervisorStrategy = OneForOneStrategy(maxNrOfRetries = 4, withinTimeRange = 20.seconds) {
     case _: LoginActor.LoginException => Restart
     case _: SocketActor.SocketException => Restart
     case _: SearchTrainMatchException => Restart
@@ -39,27 +38,24 @@ class MainActor extends Actor with ActorLogging {
   val searchActor = context.watch(context.actorOf(Props[SearchActor], name = "searchActor"))
   val commitActor = context.watch(context.actorOf(Props[CommitActor], name = "commitActor"))
 
+  var account: AccountPO = null
+  var ticket: TicketPO = null
+
   override def receive: Receive = LoggingReceive {
-    case StartMain => {
-      loginActor ! GetCookie
+    case StartMain(accountPO, ticketPO) => {
+      this.account = accountPO
+      this.ticket = ticketPO
+      loginActor ! StartLogin(account)
     }
 
     case LoginSuccess => {
       searchActor ! SearchAllTrain
     }
 
-    case SearchSuccess(ticket) => {
+    case SearchSuccess(ticketPO) => {
       log.info("searchSuccess")
-      commitActor ! FirstCommit(ticket)
+      commitActor ! FirstCommit(ticketPO)
     }
-
-
-    case ReceiveTimeout => {
-      log.debug("receive timeout. shutdown now.")
-      context.system.shutdown()
-
-    }
-
     case Terminated(actorRef) if actorRef == loginActor =>
       log.debug("loginActor terminated. shutdown now.")
       context.system.shutdown()
@@ -88,7 +84,7 @@ class MainActor extends Actor with ActorLogging {
 
 object MainActor {
 
-  case class StartMain()
+  case class StartMain(account: AccountPO, ticket: TicketPO)
 
   case class StopMain()
 

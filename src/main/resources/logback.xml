@@ -15,7 +15,7 @@
     </appender>
     <logger name="org.apache.http.wire" level="ERROR"/>
     <logger name="org.apache.http" level="INFO"/>
-    <logger name="com.cysnake.ticket.actor.SocketActor" level="debug"/>
+    <logger name="com.cysnake.ticket.actor.SocketActor" level="DEBUG"/>
     <root level="DEBUG">
         <appender-ref ref="stdout"/>
     </root>

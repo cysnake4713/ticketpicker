@@ -1,13 +1,13 @@
 <tickets>
     <ticket>
-        <from>GGQ</from>
+        <from>GZQ</from>
         <to>SZQ</to>
         <train>G6013</train>
         <date>2013-01-31</date>
         <time>00:00--24:00</time>
         <seat>8</seat>
         <passenger>
-            <name>"山河"</name>
+            <name>山河</name>
             <id>65010619890319301X</id>
             <phone>18544635976</phone>
         </passenger>

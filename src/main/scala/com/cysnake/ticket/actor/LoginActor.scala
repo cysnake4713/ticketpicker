@@ -11,11 +11,12 @@ import akka.util.duration._
 import org.apache.http.{NameValuePair, HttpStatus}
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
-import com.cysnake.ticket.actor.CodeActor.ReturnCodeResult
-import com.cysnake.ticket.actor.CodeActor.GetCode
+import com.cysnake.ticket.actor.CodeActor.{GetCodeFailure, GetCodeSuccess, GetCode}
 import java.util
 import javax.swing.ImageIcon
 import javax.imageio.ImageIO
+import com.cysnake.ticket.po.AccountPO
+import org.apache.http.util.EntityUtils
 
 //import com.cysnake.ticket.ui.CodeFrame
 
@@ -34,88 +35,93 @@ class LoginActor extends Actor with ActorLogging {
   val socketActor = context.actorFor("/user/mainActor/socketActor")
   val codeActor = context.actorFor("/user/mainActor/codeActor")
 
+  var account: AccountPO = null
+
   implicit val timeout = Timeout(10 seconds)
 
 
   override def postRestart(reason: Throwable) {
     log.debug("postRestart start working now! sender is :" + context.parent)
-    self ! GetLoginCode
+    this.account = reason.asInstanceOf[LoginException].account
+    self ! GetCookie
   }
 
   def receive = {
 
     case Response(response, httpRequest, requestFrom) => {
-      requestFrom match {
-        case GetCookie => {
-          log.debug("status:" + response.getStatusLine)
-          httpRequest.releaseConnection()
-          self ! GetLoginCode
-        }
-        case LoginFirst(code) => {
-          log.debug("status: " + response.getStatusLine)
-          if (response.getStatusLine.getStatusCode == HttpStatus.SC_OK) {
+      if (response.getStatusLine.getStatusCode == HttpStatus.SC_OK) {
+        requestFrom match {
+          case GetCookie => {
+            log.debug("get Cookie Response context is: %s" format EntityUtils.toString(response.getEntity))
+            self ! GetLoginCode
+          }
+          case LoginFirst(code) => {
             val entity = response.getEntity
             val CharsetPattern = """.*charset=(.*)""".r
             val charset = entity.getContentType.getValue match {
               case CharsetPattern(w) => w
             }
-            //            log.debug("entity:" + EntityUtils.toString(entity))
+            log.debug("test Entity string: %s" format EntityUtils.toString(response.getEntity))
             val json = new JSONObject(new JSONTokener(new InputStreamReader(entity.getContent, charset)))
-            //      httpPost.releaseConnection()
             val rand = json.get("loginRand").asInstanceOf[String]
             log.debug("rand number is: " + rand)
             httpRequest.releaseConnection()
             self ! LoginSecond(code, rand)
-          } else {
-            throw new LoginException("unable to get login rand value!!")
           }
-        }
 
-        case LoginSecond(code, rand) => {
-          httpRequest.releaseConnection()
-          self ! IsLogin
-        }
-        case IsLogin => {
-          log.debug("response status:" + response.getStatusLine)
-          log.debug("content long: " + response.getEntity.getContentLength)
-          try {
-            new ImageIcon(ImageIO.read(response.getEntity.getContent))
-          } catch {
-            case e: Exception =>
-              log.info("unable to login, retry ------------->")
-              throw new LoginException("login validate is failure!")
-          }
-          finally {
+          case LoginSecond(code, rand) => {
             httpRequest.releaseConnection()
+            self ! IsLogin
           }
-          log.debug("IsLogin result:success")
-          context.parent ! LoginSuccess
+          case IsLogin => {
+            try {
+              new ImageIcon(ImageIO.read(response.getEntity.getContent))
+            } catch {
+              case e: Exception =>
+                log.info("unable to login, retry ------------->")
+                throw new LoginException(account)
+            }
+            finally {
+              httpRequest.releaseConnection()
+            }
+            log.debug("IsLogin result:success")
+            context.parent ! LoginSuccess
 
+          }
         }
+        httpRequest.releaseConnection()
+      } else {
+        httpRequest.releaseConnection()
+        throw new LoginException(account)
       }
     }
 
     case GetCookie => {
-      log.debug("GetCookie")
-      val path = "/head/getOrderPage.har"
+      log.debug("===================GetCookie===========================")
+      val path = "/head/getCookie.har"
       val har = new HarEntity(path)
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
       socketActor ! Request(httpGet, GetCookie)
-
     }
 
     case GetLoginCode => {
       log.debug("send Get Code to getCodeActor")
-      val path = """/head/passCodeAction.do.har"""
+      val path = "/head/getLoginCode.har"
       codeActor ! GetCode(path, self)
     }
 
-    case ReturnCodeResult(code) => {
+    case GetCodeSuccess(code) => {
+      log.info("get code Success, code = %s" format code)
       self ! LoginFirst(code)
     }
 
+    case GetCodeFailure => {
+      log.info("get code failure! retry -------------------------->>>>")
+      throw new LoginException(account)
+    }
+
     case LoginFirst(code) => {
-      log.debug("LoginFirst")
+      log.debug("------------------LoginFirst-----------------------")
       val path = """/head/loginAction.do.har"""
       val har = new HarEntity(path)
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
@@ -151,25 +157,33 @@ class LoginActor extends Actor with ActorLogging {
       socketActor ! Request(httpGet, IsLogin)
     }
 
+    case StartLogin(accountPO) => {
+      this.account = accountPO
+      self ! GetCookie
+    }
+
   }
 }
 
 
 object LoginActor {
 
-  case class LoginException(msg: String) extends RuntimeException(msg)
+  case class StartLogin(account: AccountPO)
 
-  case class LoginFirst(code: String)
-
-  case class LoginSecond(code: String, rand: String)
-
-  case class GetCookie()
-
-  case class IsLogin()
+  case class LoginException(account: AccountPO) extends RuntimeException
 
   case class LoginSuccess()
 
-  case class GetLoginCode()
+  private case class LoginFirst(code: String)
+
+  private case class LoginSecond(code: String, rand: String)
+
+  private case class GetCookie()
+
+  private case class IsLogin()
+
+
+  private case class GetLoginCode()
 
 }
 

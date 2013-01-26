@@ -3,12 +3,9 @@ package com.cysnake.ticket.actor
 import akka.actor.{ActorRef, ActorLogging, Actor}
 import com.cysnake.har.HarEntity
 import org.apache.http.client.methods.HttpGet
-import org.apache.http.util.EntityUtils
 import org.apache.http.HttpStatus
-import akka.util.duration._
 import scala.Predef._
-import com.cysnake.ticket.actor.CodeActor.{ReturnCodeResult, GetCode}
-import java.io.InputStream
+import com.cysnake.ticket.actor.CodeActor.{GetCodeFailure, GetCodeSuccess, GetCode}
 import swing.{FlowPanel, TextField, Label, Dialog}
 import javax.swing.ImageIcon
 import javax.imageio.ImageIO
@@ -44,24 +41,29 @@ class CodeActor extends Actor with ActorLogging {
     case Response(response, httpRequest, requestType) => {
       requestType match {
         case GetCode(path, sourceActor) => {
-          if (response.getStatusLine.getStatusCode == HttpStatus.SC_OK) {
-            val entity = response.getEntity
-            val stream = entity.getContent
-            CodeDialog.start(entity.getContent, sourceActor)
-            httpRequest.releaseConnection()
-          } else {
-            //TODO
+          try {
+            if (response.getStatusLine.getStatusCode == HttpStatus.SC_OK) {
+              val entity = response.getEntity
+              val imageIcon = new ImageIcon(ImageIO.read(entity.getContent))
+              CodeDialog.start(imageIcon, sourceActor)
+            } else {
+              sourceActor ! GetCodeFailure
+            }
+          } catch {
+            case ex: Exception =>
+              log.info("parse image fail, retry -------------->")
+              sourceActor ! GetCodeFailure
           }
         }
       }
+      httpRequest.releaseConnection()
     }
 
     case GetCode(path: String, sourceActor) => {
-
+      log.debug("================GetCode============================== from: %s" format sourceActor.path)
       val har = new HarEntity(path)
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
       val socket = context.actorFor("/user/mainActor/socketActor")
-      log.debug(self + "send request to socketActor")
       socket ! Request(httpGet, GetCode(path, sourceActor))
     }
   }
@@ -75,11 +77,10 @@ class CodeActor extends Actor with ActorLogging {
     }
 
 
-    preferredSize = new Dimension(150, 60)
+    preferredSize = new Dimension(200, 100)
     contents = new FlowPanel {
       contents += imageLabel
       contents += inputText
-
       //      focusable = true
       //      requestFocus()
     }
@@ -87,23 +88,19 @@ class CodeActor extends Actor with ActorLogging {
 
     reactions += {
       case EditDone(`inputText`) => {
-        println("code Frame get EditDone message!" + thisActor)
         if (thisActor != null) {
-          thisActor ! ReturnCodeResult(inputText.text)
+          //          println("code Frame get EditDone message!" + thisActor)
+          thisActor ! GetCodeSuccess(inputText.text)
           thisActor = null
         }
         this.close()
       }
     }
 
-    def start(is: InputStream, actor: ActorRef) {
+    def start(imageIcon: ImageIcon, actor: ActorRef) {
       inputText.text = ""
-      if (is != null)
-        try {
-          imageLabel.icon = new ImageIcon(ImageIO.read(is))
-        } catch {
-          case e: Exception => log.error(e, "parse image error!!!------------" + actor)
-        }
+      if (imageIcon != null)
+        imageLabel.icon = imageIcon
       thisActor = actor
       this.open()
     }
@@ -115,7 +112,9 @@ object CodeActor {
 
   case class GetCode(path: String, sourceActor: ActorRef)
 
-  case class ReturnCodeResult(code: String)
+  case class GetCodeSuccess(code: String)
+
+  case class GetCodeFailure()
 
 }
 

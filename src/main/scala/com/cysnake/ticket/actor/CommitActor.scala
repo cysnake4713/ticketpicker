@@ -19,7 +19,7 @@ import org.apache.http.util.EntityUtils
 import java.io.FileWriter
 import com.cysnake.ticket.po.TicketPO
 import com.cysnake.ticket.actor.CommitActor.{FirstCommit, FinalCommit}
-import com.cysnake.ticket.actor.CodeActor.{ReturnCodeResult, GetCode}
+import com.cysnake.ticket.actor.CodeActor.{GetCodeSuccess, GetCode}
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -47,7 +47,7 @@ class CommitActor extends Actor with ActorLogging {
           httpRequest.releaseConnection()
         }
 
-        case ReturnCodeResult(code) => {
+        case GetCodeSuccess(code) => {
           log.debug("status" + response.getStatusLine)
           val target = EntityUtils.toString(response.getEntity)
           println("entity: " + target)
@@ -60,9 +60,9 @@ class CommitActor extends Actor with ActorLogging {
     }
 
 
-    case ReturnCodeResult(code) => {
+    case GetCodeSuccess(code) => {
       //first commit
-      log.debug("ReturnCodeResult: " + code)
+      log.debug("GetCodeSuccess: " + code)
       val path = "/head/preConfirm.har"
       val har = new HarEntity(path)
       //TODO :
@@ -111,7 +111,7 @@ class CommitActor extends Actor with ActorLogging {
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
       httpPost.setURI(new URI(httpPost.getURI + code))
       httpPost.setEntity(entity)
-      socketActor ! Request(httpPost, ReturnCodeResult(code))
+      socketActor ! Request(httpPost, GetCodeSuccess(code))
     }
 
     case FirstCommit(ticketTemp) => {

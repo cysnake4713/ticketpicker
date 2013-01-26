@@ -1,6 +1,6 @@
 package com.cysnake.ticket.http
 
-import com.cysnake.http.JavaHttpsUtil
+import com.cysnake.http.CommonHttpUtil
 
 
 /**
@@ -11,7 +11,7 @@ import com.cysnake.http.JavaHttpsUtil
  * if you have problem here, please contact me: cysnake4713@gmail.com
  */
 object HttpsUtil {
-  private val httpsUtil = JavaHttpsUtil.getHttpClient
+  private val httpsUtil = CommonHttpUtil.getCustomHttpClient(withProxy = false)
 
   def getHttpClient = httpsUtil
 

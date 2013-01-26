@@ -8,7 +8,7 @@
 //import akka.actor.{Props, ActorSystem, ActorRef}
 //import akka.dispatch.Await
 //import com.typesafe.config.ConfigFactory
-//import com.cysnake.ticket.actor.CodeActor.ReturnCodeResult
+//import com.cysnake.ticket.actor.CodeActor.GetCodeSuccess
 //import com.cysnake.ticket.actor.MainActor._
 //import com.cysnake.ticket.actor.MainActor
 //

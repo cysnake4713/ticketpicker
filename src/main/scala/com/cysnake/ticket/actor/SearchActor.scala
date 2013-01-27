@@ -28,7 +28,7 @@ import org.apache.http.util.EntityUtils
 class SearchActor extends Actor with ActorLogging {
   implicit val timeout = Timeout(10 seconds)
   val socketActor = context.actorFor("/user/mainActor/socketActor")
-  var ticketPO: TicketPO = null
+  var ticket: TicketPO = null
 
   override def postRestart(reason: Throwable) {
     super.postRestart(reason)
@@ -36,6 +36,11 @@ class SearchActor extends Actor with ActorLogging {
   }
 
   override def receive: Receive = {
+
+    case StartSearchTrain(ticketPO) => {
+      this.ticket = ticketPO
+      self ! SearchAllTrain
+    }
 
     case Response(response, httpRequest, requestType) => {
       requestType match {
@@ -46,40 +51,40 @@ class SearchActor extends Actor with ActorLogging {
           val context1 = EntityUtils.toString(response.getEntity)
           try {
             //TODO
-            val values = getArray(context1, ticketPO.trainName)
-            ticketPO.fromName = values(7)
-            ticketPO.toName = values(8)
-            ticketPO.startTime = values(2)
-            ticketPO.endTime = values(6)
-            ticketPO.trainCode = values(3)
+            val values = getArray(context1, ticket.trainName)
+            ticket.fromName = values(7)
+            ticket.toName = values(8)
+            ticket.startTime = values(2)
+            ticket.endTime = values(6)
+            ticket.trainCode = values(3)
             val formParams = new util.ArrayList[NameValuePair]
-            formParams add new BasicNameValuePair("station_train_code", ticketPO.trainName)
-            formParams add new BasicNameValuePair("train_date", ticketPO.date)
+            formParams add new BasicNameValuePair("station_train_code", ticket.trainName)
+            formParams add new BasicNameValuePair("train_date", ticket.date)
             formParams add new BasicNameValuePair("seattype_num", "")
-            formParams add new BasicNameValuePair("from_station_telecode", ticketPO.fromCode)
-            formParams add new BasicNameValuePair("to_station_telecode", ticketPO.toCode)
+            formParams add new BasicNameValuePair("from_station_telecode", ticket.fromCode)
+            formParams add new BasicNameValuePair("to_station_telecode", ticket.toCode)
             formParams add new BasicNameValuePair("include_student", "00")
-            formParams add new BasicNameValuePair("from_station_telecode_name", ticketPO.fromName)
-            formParams add new BasicNameValuePair("to_station_telecode_name", ticketPO.toName)
-            formParams add new BasicNameValuePair("round_train_date", ticketPO.date)
-            formParams add new BasicNameValuePair("round_start_time_str", ticketPO.time)
+            formParams add new BasicNameValuePair("from_station_telecode_name", ticket.fromName)
+            formParams add new BasicNameValuePair("to_station_telecode_name", ticket.toName)
+            formParams add new BasicNameValuePair("round_train_date", ticket.date)
+            formParams add new BasicNameValuePair("round_start_time_str", ticket.time)
             formParams add new BasicNameValuePair("single_round_type", "1")
             formParams add new BasicNameValuePair("train_pass_type", "QB")
             formParams add new BasicNameValuePair("train_class_arr", "QB#D#Z#T#K#QT#")
-            formParams add new BasicNameValuePair("start_time_str", ticketPO.time)
+            formParams add new BasicNameValuePair("start_time_str", ticket.time)
             formParams add new BasicNameValuePair("lishi", values(1))
             formParams add new BasicNameValuePair("train_start_time", values(2))
             formParams add new BasicNameValuePair("trainno4", values(3))
             formParams add new BasicNameValuePair("arrive_time", values(6))
-            formParams add new BasicNameValuePair("from_station_name", ticketPO.fromName)
-            formParams add new BasicNameValuePair("to_station_name", ticketPO.toName)
+            formParams add new BasicNameValuePair("from_station_name", ticket.fromName)
+            formParams add new BasicNameValuePair("to_station_name", ticket.toName)
             formParams add new BasicNameValuePair("from_station_no", values(9))
             formParams add new BasicNameValuePair("to_station_no", values(10))
             formParams add new BasicNameValuePair("ypInfoDetail", values(11))
             formParams add new BasicNameValuePair("mmStr", values(12))
             formParams add new BasicNameValuePair("locationCode", values(13))
             val entity = new UrlEncodedFormEntity(formParams, "UTF-8")
-            self ! PreOrder(entity, ticketPO)
+            self ! PreOrder(entity, ticket)
           } catch {
             case ex: UnOrderAble => self ! SearchAllTrain
             case ex: Exception => throw ex
@@ -144,13 +149,13 @@ class SearchActor extends Actor with ActorLogging {
       socketActor ! Request(httpGet, GetOrderPage(ticket))
     }
 
-    case PreOrder(entity, ticket) => {
+    case PreOrder(entity, ticketPO) => {
       log.debug("preOrder")
       val path = """/head/search-commit.har"""
       val har = new HarEntity(path)
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
       httpPost.setEntity(entity)
-      socketActor ! Request(httpPost, PreOrder(entity, ticket))
+      socketActor ! Request(httpPost, PreOrder(entity, ticketPO))
     }
 
     case SearchAllTrain => {
@@ -216,15 +221,18 @@ class SearchActor extends Actor with ActorLogging {
 
 object SearchActor {
 
-  case class PreOrder(entity: UrlEncodedFormEntity, ticket: TicketPO)
 
-  case class SearchAllTrain()
+  case class StartSearchTrain(ticket: TicketPO)
 
-  case class GetOrderPage(ticket: TicketPO)
+  private case class PreOrder(entity: UrlEncodedFormEntity, ticket: TicketPO)
+
+  private case class SearchAllTrain()
+
+  private case class GetOrderPage(ticket: TicketPO)
 
   case class SearchTrainMatchException(msg: String) extends RuntimeException(msg)
 
-  case class UnOrderAble(msg: String) extends RuntimeException(msg)
+  private case class UnOrderAble(msg: String) extends RuntimeException(msg)
 
   case class SearchSuccess(ticket: TicketPO)
 

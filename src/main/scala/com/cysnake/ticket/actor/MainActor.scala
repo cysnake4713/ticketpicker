@@ -49,7 +49,8 @@ class MainActor extends Actor with ActorLogging {
     }
 
     case LoginSuccess => {
-      searchActor ! SearchAllTrain
+      log.debug("start search Train info.")
+      searchActor ! StartSearchTrain(ticket)
     }
 
     case SearchSuccess(ticketPO) => {

@@ -17,6 +17,7 @@ import javax.swing.ImageIcon
 import javax.imageio.ImageIO
 import com.cysnake.ticket.po.AccountPO
 import org.apache.http.util.EntityUtils
+import scala.util.matching.Regex
 
 //import com.cysnake.ticket.ui.CodeFrame
 
@@ -48,21 +49,23 @@ class LoginActor extends Actor with ActorLogging {
 
   def receive = {
 
+    case StartLogin(accountPO) => {
+      this.account = accountPO
+      self ! GetCookie
+    }
+
+
     case Response(response, httpRequest, requestFrom) => {
       if (response.getStatusLine.getStatusCode == HttpStatus.SC_OK) {
         requestFrom match {
           case GetCookie => {
-            log.debug("get Cookie Response context is: %s" format EntityUtils.toString(response.getEntity))
+            //            log.debug("get Cookie Response context is: %s" format EntityUtils.toString(response.getEntity))
             self ! GetLoginCode
           }
           case LoginFirst(code) => {
-            val entity = response.getEntity
-            val CharsetPattern = """.*charset=(.*)""".r
-            val charset = entity.getContentType.getValue match {
-              case CharsetPattern(w) => w
-            }
-            log.debug("test Entity string: %s" format EntityUtils.toString(response.getEntity))
-            val json = new JSONObject(new JSONTokener(new InputStreamReader(entity.getContent, charset)))
+            val entityString = EntityUtils.toString(response.getEntity)
+            log.debug("rand Entity string: %s" format entityString)
+            val json = new JSONObject(new JSONTokener(entityString))
             val rand = json.get("loginRand").asInstanceOf[String]
             log.debug("rand number is: " + rand)
             httpRequest.releaseConnection()
@@ -84,7 +87,7 @@ class LoginActor extends Actor with ActorLogging {
             finally {
               httpRequest.releaseConnection()
             }
-            log.debug("IsLogin result:success")
+            log.debug("IsLogin result: success")
             context.parent ! LoginSuccess
 
           }
@@ -98,7 +101,7 @@ class LoginActor extends Actor with ActorLogging {
 
     case GetCookie => {
       log.debug("===================GetCookie===========================")
-      val path = "/head/getCookie.har"
+      val path = "/head/1.getCookie.har"
       val har = new HarEntity(path)
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
       socketActor ! Request(httpGet, GetCookie)
@@ -106,7 +109,7 @@ class LoginActor extends Actor with ActorLogging {
 
     case GetLoginCode => {
       log.debug("send Get Code to getCodeActor")
-      val path = "/head/getLoginCode.har"
+      val path = "/head/2.getLoginCode.har"
       codeActor ! GetCode(path, self)
     }
 
@@ -122,24 +125,24 @@ class LoginActor extends Actor with ActorLogging {
 
     case LoginFirst(code) => {
       log.debug("------------------LoginFirst-----------------------")
-      val path = """/head/loginAction.do.har"""
+      val path = """/head/3.FirstLogin.har"""
       val har = new HarEntity(path)
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
       socketActor ! Request(httpPost, LoginFirst(code))
     }
 
     case LoginSecond(code, rand) => {
-      log.debug("LoginSecond")
-      val path = """/head/loginAction2.do.har"""
+      log.debug("--------------------------LoginSecond------------------------------")
+      val path = "/head/4.Secondlogin.har"
       val har = new HarEntity(path)
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
       val formParams = new util.ArrayList[NameValuePair]
       formParams add new BasicNameValuePair("loginRand", rand)
       formParams add new BasicNameValuePair("refundLogin", "N")
       formParams add new BasicNameValuePair("refundFlag", "Y")
-      formParams add new BasicNameValuePair("loginUser.user_name", "dongcidaci1")
+      formParams add new BasicNameValuePair("loginUser.user_name", account.name)
       formParams add new BasicNameValuePair("nameErrorFocus", "")
-      formParams add new BasicNameValuePair("user.password", "36937004cys")
+      formParams add new BasicNameValuePair("user.password", account.password)
       formParams add new BasicNameValuePair("passwordErrorFocus", "")
       formParams add new BasicNameValuePair("randErrorFocus", "")
       formParams add new BasicNameValuePair("randCode", code)
@@ -150,17 +153,13 @@ class LoginActor extends Actor with ActorLogging {
 
 
     case IsLogin => {
-      log.debug("IsLogin")
-      val path = "/head/ticketPassCode.do.har"
+      log.debug("-------------------------IsLogin-------------------------------")
+      val path = "/head/5.isLogin.har"
       val har = new HarEntity(path)
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
       socketActor ! Request(httpGet, IsLogin)
     }
 
-    case StartLogin(accountPO) => {
-      this.account = accountPO
-      self ! GetCookie
-    }
 
   }
 }

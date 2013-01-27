@@ -25,6 +25,7 @@ class MainActor extends Actor with ActorLogging {
     case _: LoginActor.LoginException => Restart
     case _: SocketActor.SocketException => Restart
     case _: SearchTrainMatchException => Restart
+    case _: OrderPageException => Restart
     case _: Exception => Stop
   }
 
@@ -55,7 +56,8 @@ class MainActor extends Actor with ActorLogging {
 
     case SearchSuccess(ticketPO) => {
       log.info("searchSuccess")
-      commitActor ! FirstCommit(ticketPO)
+      ticket = ticketPO
+      commitActor ! FirstCommit(ticket)
     }
     case Terminated(actorRef) if actorRef == loginActor =>
       log.debug("loginActor terminated. shutdown now.")

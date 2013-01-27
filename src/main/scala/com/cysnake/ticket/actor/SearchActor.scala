@@ -4,15 +4,12 @@ import akka.actor.{ActorLogging, Actor}
 import com.cysnake.ticket.actor.SearchActor._
 import com.cysnake.har.HarEntity
 import org.apache.http.client.methods.{HttpPost, HttpGet}
-import org.json.{JSONArray, JSONObject}
-import scala.collection.mutable
-import xml.XML
-import java.net.{URLEncoder, URI}
+import java.net.URI
 import com.cysnake.ticket.actor.SocketActor.{Response, Request}
 import akka.util.Timeout
 import akka.util.duration._
 import java.util
-import org.apache.http.NameValuePair
+import org.apache.http.{HttpStatus, NameValuePair}
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import com.cysnake.ticket.po.TicketPO
@@ -32,6 +29,9 @@ class SearchActor extends Actor with ActorLogging {
 
   override def postRestart(reason: Throwable) {
     super.postRestart(reason)
+    if (reason.isInstanceOf[OrderPageException]) {
+      ticket = reason.asInstanceOf[OrderPageException].ticket
+    }
     self ! SearchAllTrain
   }
 
@@ -45,12 +45,9 @@ class SearchActor extends Actor with ActorLogging {
     case Response(response, httpRequest, requestType) => {
       requestType match {
         case SearchAllTrain => {
-          //          response.getEntity.get
-          //          val context1 = scala.io.Source.fromInputStream(response.getEntity.getContent, "UTF-8")
-          //            .getLines().mkString("")
           val context1 = EntityUtils.toString(response.getEntity)
+          log.debug("searchAllTrain result:" + context1)
           try {
-            //TODO
             val values = getArray(context1, ticket.trainName)
             ticket.fromName = values(7)
             ticket.toName = values(8)
@@ -84,107 +81,78 @@ class SearchActor extends Actor with ActorLogging {
             formParams add new BasicNameValuePair("mmStr", values(12))
             formParams add new BasicNameValuePair("locationCode", values(13))
             val entity = new UrlEncodedFormEntity(formParams, "UTF-8")
-            self ! PreOrder(entity, ticket)
+            self ! PreOrder(entity)
           } catch {
             case ex: UnOrderAble => self ! SearchAllTrain
             case ex: Exception => throw ex
           }
         }
 
-        case PreOrder(entity, ticket) => {
+        case PreOrder(entity) => {
           // TODO: when failure what do you do and how you define failure
-          //         println(response.getStatusLine)
-          //          val result = EntityUtils.toString(response.getEntity)
-          //          val file = new FileWriter("D:/ticket/test.html")
-          //          file.write(result)
-          //          file.close()
           httpRequest.releaseConnection()
-          self ! GetOrderPage(ticket)
-
+          self ! GetOrderPage
         }
 
-        case GetOrderPage(ticket) => {
-          log.info("get order Page here ")
-          val contextResponse = scala.io.Source.fromInputStream(response.getEntity.getContent, "UTF-8")
-            .getLines().mkString("")
-
-          val tokenRegx = """.*name\=\"org\.apache\.struts\.taglib\.html\.TOKEN\"\s*value\=\"(\w{32})\"\>.*""".r
-          val token = contextResponse match {
-            case tokenRegx(value) => value
-            case _ => ""
-          }
-          val leftTicketRegx = """.*name=\"leftTicketStr\"\s*id=\"left\_ticket\"\s*value\=\"(\w{30})\".*""".r
-          val leftTicket = contextResponse match {
-            case leftTicketRegx(value) => value
-            case _ => ""
-          }
-          log.debug("token is: " + token + " left token is: " + leftTicket)
-          if (token != "" && leftTicket != "") {
-            ticket.token = token
-            ticket.leftTiketToken = leftTicket
-            context.parent ! SearchSuccess(ticket)
-
+        case GetOrderPage => {
+          if (response.getStatusLine.getStatusCode == HttpStatus.SC_OK) {
+            val contextResponse = EntityUtils.toString(response.getEntity).trim.replaceAll("[\n\r]", "")
+            val tokenRegx = """.*name\=\"org\.apache\.struts\.taglib\.html\.TOKEN\"\s*value\=\"(\w{32})\"\>.*""".r
+            val token = contextResponse match {
+              case tokenRegx(value) => value
+              case _ => ""
+            }
+            val leftTicketRegx = """.*name=\"leftTicketStr\"\s*id=\"left\_ticket\"\s*value\=\"(\w{30})\".*""".r
+            val leftTicket = contextResponse match {
+              case leftTicketRegx(value) => value
+              case _ => ""
+            }
+            log.debug("token is: " + token + " left token is: " + leftTicket)
+            if (token != "" && leftTicket != "") {
+              ticket.token = token
+              ticket.leftTiketToken = leftTicket
+              context.parent ! SearchSuccess(ticket)
+            } else {
+              log.info("can't get order page, retry ------------------")
+              throw new OrderPageException(ticket)
+            }
           } else {
             log.info("can't get order page, retry ------------------")
-            self ! SearchAllTrain
+            throw new OrderPageException(ticket)
           }
-
-
-
-
-          //          val file = new FileWriter("D:/ticket/test" + i + ".html")
-          //          i += 1
-          //          file.write(context1)
-          //          file.close()
           httpRequest.releaseConnection()
-          //          context.system.shutdown()
         }
       }
     }
 
-    case GetOrderPage(ticket) => {
-      val path = "/head/getCookie.harar"
+    case GetOrderPage => {
+      log.debug("-------------------------GetOrderPage-------------------------------------")
+      val path = "/head/8.getOrderPage.har"
       val har = new HarEntity(path)
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
-      socketActor ! Request(httpGet, GetOrderPage(ticket))
+      socketActor ! Request(httpGet, GetOrderPage)
     }
 
-    case PreOrder(entity, ticketPO) => {
-      log.debug("preOrder")
-      val path = """/head/search-commit.har"""
+    case PreOrder(entity) => {
+      log.debug("--------------------------preOrder----------------------------------------")
+      val path = """/head/7.preOrder.har"""
       val har = new HarEntity(path)
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
       httpPost.setEntity(entity)
-      socketActor ! Request(httpPost, PreOrder(entity, ticketPO))
+      socketActor ! Request(httpPost, PreOrder(entity))
     }
 
     case SearchAllTrain => {
-      val har = new HarEntity("/head/search-all-train.do.har")
+      log.debug("--------------------------searchAllTrain-----------------------------------")
+      val har = new HarEntity("/head/6.searchAllTrain.har")
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
-
-      //set queryString
-      val queryString = har.getJson.get("request").asInstanceOf[JSONObject]
-        .get("queryString").asInstanceOf[JSONArray]
-      val queryMap = mutable.Map.empty[String, String]
-      for (i <- 0 to queryString.length - 1) {
-        val queryJson = queryString.getJSONObject(i)
-        queryMap += queryJson.get("name").toString -> queryJson.get("value").toString
-      }
-      //set ticket information
-      //TODO:
-      //      queryMap("orderRequest.from_station_telecode") = (xml \ "ticket" \ "from").text
-      //      queryMap("orderRequest.to_station_telecode") = (xml \ "ticket" \ "to").text
-      //      queryMap("orderRequest.train_date") = (xml \ "ticket" \ "date").text
-      //      queryMap("orderRequest.start_time_str") = URLEncoder.encode((xml \ "ticket" \ "time").text)
-
-      //add queryString to url
-      val queryValue = ("" /: queryMap) {
-        (result, ele) => result + "&" + ele._1 + "=" + ele._2
-      }
-      queryValue.substring(1)
-      //      httpGet.setURI(new URI(httpGet.getURI + "?" + URLEncoder.encode(queryValue.substring(1), "UTF-8")))
-      httpGet.setURI(new URI(httpGet.getURI + "?" + queryValue.substring(1)))
-      //      httpGet.setURI(new URI( """https://dynamic.12306.cn/otsweb/order/querySingleAction.do?method=queryLeftTicket&orderRequest.train_date=2013-02-02&orderRequest.from_station_telecode=SZQ&orderRequest.to_station_telecode=GGQ&orderRequest.train_no=&trainPassType=QB&trainClass=QB%23D%23Z%23T%23K%23QT%23&includeStudent=00&seatTypeAndNum=&orderRequest.start_time_str=00%3A00--24%3A00"""))
+      val httpUrl = """https://dynamic.12306.cn/otsweb/order/querySingleAction.do?""" +
+        """method=queryLeftTicket&orderRequest.train_date=""" + ticket.date +
+        """&orderRequest.from_station_telecode=""" + ticket.fromCode +
+        """&orderRequest.to_station_telecode=""" + ticket.toCode +
+        """&orderRequest.train_no=&trainPassType=QB&trainClass=QB%23D%23Z%23T%23K%23QT%23&""" +
+        """includeStudent=00&seatTypeAndNum=&orderRequest.start_time_str=00%3A00--24%3A00"""
+      httpGet.setURI(new URI(httpUrl))
       socketActor ! Request(httpGet, SearchAllTrain)
     }
 
@@ -193,7 +161,6 @@ class SearchActor extends Actor with ActorLogging {
   //  @throws(classOf[SearchTrainMatchException], classOf[UnOrderAble])
   private def getArray(source: String, trainNum: String): Array[String] = {
     val regx = """<span()"""
-    log.debug("source is: " + source)
     val result = source.split(regx)
     var trainLine = ""
     for (re <- result) {
@@ -224,13 +191,15 @@ object SearchActor {
 
   case class StartSearchTrain(ticket: TicketPO)
 
-  private case class PreOrder(entity: UrlEncodedFormEntity, ticket: TicketPO)
+  private case class PreOrder(entity: UrlEncodedFormEntity)
 
   private case class SearchAllTrain()
 
-  private case class GetOrderPage(ticket: TicketPO)
+  private case class GetOrderPage()
 
   case class SearchTrainMatchException(msg: String) extends RuntimeException(msg)
+
+  case class OrderPageException(ticket: TicketPO) extends RuntimeException
 
   private case class UnOrderAble(msg: String) extends RuntimeException(msg)
 

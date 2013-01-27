@@ -2,7 +2,7 @@ package com.cysnake.ticket.actor
 
 import akka.actor.{ActorLogging, Actor}
 import com.cysnake.ticket.http.HttpsUtil
-import org.apache.http.client.methods.{HttpPost, HttpRequestBase}
+import org.apache.http.client.methods.{HttpGet, HttpPost, HttpRequestBase}
 import org.apache.http.{NameValuePair, HttpResponse}
 import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.client.utils.URLEncodedUtils
@@ -41,6 +41,9 @@ class SocketActor extends Actor with ActorLogging {
         val entity = httpRequest.asInstanceOf[HttpPost].getEntity
         val requestValues: java.util.List[NameValuePair] = URLEncodedUtils.parse(entity)
         log.debug("request form: " + requestValues)
+      }
+      if (httpRequest.isInstanceOf[HttpGet]) {
+        log.debug("get request query: %s" format httpRequest.getURI.getQuery)
       }
       log.debug("cookis is :" + httpClient.asInstanceOf[DefaultHttpClient].getCookieStore.getCookies)
       try {

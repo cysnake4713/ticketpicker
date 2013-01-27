@@ -2,13 +2,13 @@
     <ticket>
         <from>GZQ</from>
         <to>SZQ</to>
-        <train>G6013</train>
+        <train>D7136</train>
         <date>2013-01-31</date>
         <time>00:00--24:00</time>
         <seat>8</seat>
         <passenger>
             <name>山河</name>
-            <id>65010619890319301X</id>
+            <id>110101197804035778</id>
             <phone>18544635976</phone>
         </passenger>
 

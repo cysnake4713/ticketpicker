@@ -1,25 +1,27 @@
 package com.cysnake.ticket.actor
 
-import akka.actor.{Props, ActorLogging, Actor}
-import com.cysnake.ticket.actor.SearchActor._
+import akka.actor.{ActorLogging, Actor}
 import com.cysnake.har.HarEntity
 import org.apache.http.client.methods.{HttpPost, HttpGet}
-import org.json.{JSONArray, JSONObject}
-import scala.collection.mutable
-import xml.XML
 import java.net.URI
 import com.cysnake.ticket.actor.SocketActor.{Response, Request}
-import akka.util.Timeout
-import akka.util.duration._
 import java.util
 import org.apache.http.NameValuePair
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.util.EntityUtils
-import java.io.FileWriter
 import com.cysnake.ticket.po.TicketPO
-import com.cysnake.ticket.actor.CommitActor.{FirstCommit, FinalCommit}
+import com.cysnake.ticket.actor.CommitActor._
 import com.cysnake.ticket.actor.CodeActor.{GetCodeSuccess, GetCode}
+import org.json.JSONObject
+import com.cysnake.ticket.actor.CommitActor.SecondCommit
+import com.cysnake.ticket.actor.CodeActor.GetCode
+import com.cysnake.ticket.actor.CommitActor.FinalCommit
+import com.cysnake.ticket.actor.CommitActor.StartCommit
+import com.cysnake.ticket.actor.SocketActor.Response
+import com.cysnake.ticket.actor.SocketActor.Request
+import com.cysnake.ticket.actor.CommitActor.FirstCommit
+import com.cysnake.ticket.actor.CodeActor.GetCodeSuccess
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -31,42 +33,70 @@ import com.cysnake.ticket.actor.CodeActor.{GetCodeSuccess, GetCode}
 class CommitActor extends Actor with ActorLogging {
   val socketActor = context.actorFor("/user/mainActor/socketActor")
   val codeActor = context.actorFor("/user/mainActor/codeActor")
+  var code: String = ""
+
+
   var ticket: TicketPO = null
 
   override def receive: Receive = {
 
     case Response(response, httpRequest, requestType) => {
       requestType match {
-        case FinalCommit(code) => {
-          log.debug("status" + response.getStatusLine)
-          val target = EntityUtils.toString(response.getEntity)
-          println("entity: " + target)
-          val file = new FileWriter("D:/ticket/test.html")
-          file.write(target)
-          file.close()
+
+        case FindUserInfo => {
+          log.debug("result: " + EntityUtils.toString(response.getEntity))
           httpRequest.releaseConnection()
+          self ! FirstCommit
+        }
+        case FinalCommit => {
+          val target = EntityUtils.toString(response.getEntity)
+          log.debug("entity: " + target)
+          httpRequest.releaseConnection()
+
         }
 
-        case GetCodeSuccess(code) => {
-          log.debug("status" + response.getStatusLine)
+        case GetCodeSuccess => {
           val target = EntityUtils.toString(response.getEntity)
-          println("entity: " + target)
-          val file = new FileWriter("D:/ticket/test.html")
-          file.write(target)
-          file.close()
+          log.debug("entity: " + target)
+          val resultJson = new JSONObject(target)
+          if (resultJson.get("errMsg").toString == "Y") {
+            log.debug("first commit success!")
+            self ! SecondCommit
+          } else {
+            context.parent ! CommitFailure
+          }
           httpRequest.releaseConnection()
+
+        }
+
+        case SecondCommit => {
+          log.debug("entity is: " + EntityUtils.toString(response.getEntity))
+          //TODO:
+          self ! FinalCommit
         }
       }
     }
 
+    case SecondCommit => {
+      log.debug("---------------------------SecondCommit--------------------------------------")
+      val path = """/head/11.SecondCommit.har"""
+      val httpGet = new HarEntity(path).generateHttpRequest.asInstanceOf[HttpGet]
+      val httpUrl =
+        ("""https://dynamic.12306.cn/otsweb/order/confirmPassengerAction.do?""" +
+          """method=getQueueCount&train_date=%s&train_no=%s&""" +
+          """station=%s&seat=%s&from=%s&to=%s&ticket=%s""")
+          .format(ticket.date, ticket.trainCode, ticket.trainName,
+          ticket.seat, ticket.fromCode, ticket.toCode, ticket.leftTiketToken)
+      httpGet.setURI(new URI((httpUrl)))
+      socketActor ! Request(httpGet, SecondCommit)
+    }
 
-    case GetCodeSuccess(code) => {
-      //first commit
-      log.debug("GetCodeSuccess: " + code)
-      val path = "/head/preConfirm.har"
+
+    case GetCodeSuccess(codePO) => {
+      log.debug("-------------------GetCodeSuccess: %s -----------------------------" format codePO)
+      this.code = codePO
+      val path = "/head/10.firstCommit.har"
       val har = new HarEntity(path)
-      //TODO :
-      ticket.passengerName = "asd"
       val ticketInfo = ticket.seat + ",0,1," + ticket.passengerName + ",1," + ticket.passengerId + "," + ticket.passengerPhone + ",N"
       val formParams = new util.ArrayList[NameValuePair]
       formParams add new BasicNameValuePair("org.apache.struts.taglib.html.TOKEN", ticket.token)
@@ -109,26 +139,24 @@ class CommitActor extends Actor with ActorLogging {
       val entity = new UrlEncodedFormEntity(formParams, "UTF-8")
 
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
-      httpPost.setURI(new URI(httpPost.getURI + code))
+      httpPost.setURI(new URI(httpPost.getURI + "&rand=%s".format(code)))
       httpPost.setEntity(entity)
-      socketActor ! Request(httpPost, GetCodeSuccess(code))
+      socketActor ! Request(httpPost, GetCodeSuccess)
     }
 
-    case FirstCommit(ticketTemp) => {
-      ticket = ticketTemp
-      log.debug("firstCommit start")
-      codeActor ! GetCode("/head/commitTicketCode.har", self)
+    case FirstCommit => {
+      log.debug("-------------------------firstCommit------------------------------")
+      codeActor ! GetCode("/head/9.getCommitCode.har", self)
     }
 
-    case FinalCommit(code) => {
-      val path = "/head/finalConfirm.har"
+    case FinalCommit => {
+      log.debug("---------------------------FinalCommit----------------------------------")
+      val path = "/head/12.thirdCommit.har"
       val har = new HarEntity(path)
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
-
       val formParams = new util.ArrayList[NameValuePair]
       //TODO: update the ticket info
       val ticketInfo = ticket.seat + ",0,1," + ticket.passengerName + ",1," + ticket.passengerId + "," + ticket.passengerPhone + ",N"
-
       formParams add new BasicNameValuePair("org.apache.struts.taglib.html.TOKEN", ticket.token)
       formParams add new BasicNameValuePair("leftTicketStr", ticket.leftTiketToken)
       formParams add new BasicNameValuePair("textfield", "中文或拼音首字母")
@@ -154,6 +182,7 @@ class CommitActor extends Actor with ActorLogging {
       formParams add new BasicNameValuePair("passenger_1_cardtype", "1")
       formParams add new BasicNameValuePair("passenger_1_cardno", ticket.passengerId)
       formParams add new BasicNameValuePair("passenger_1_mobileno", ticket.passengerPhone)
+      formParams add new BasicNameValuePair("checkbox9", "Y")
       formParams add new BasicNameValuePair("oldPassengers", "")
       formParams add new BasicNameValuePair("checkbox9", "Y")
       formParams add new BasicNameValuePair("oldPassengers", "")
@@ -163,10 +192,22 @@ class CommitActor extends Actor with ActorLogging {
       formParams add new BasicNameValuePair("oldPassengers", "")
       formParams add new BasicNameValuePair("checkbox9", "Y")
       formParams add new BasicNameValuePair("randCode", code)
+      formParams add new BasicNameValuePair("orderRequest.reserve_flag", "A")
       val entity = new UrlEncodedFormEntity(formParams, "UTF-8")
       httpPost.setEntity(entity)
-      socketActor ! Request(httpPost, FinalCommit(code))
+      socketActor ! Request(httpPost, FinalCommit)
 
+    }
+
+    case FindUserInfo => {
+      val path = """/head/13.temp.findAllPassenger.har"""
+      val httpPost = new HarEntity(path).generateHttpRequest.asInstanceOf[HttpPost]
+      socketActor ! Request(httpPost, FindUserInfo)
+    }
+
+    case StartCommit(ticketPO) => {
+      ticket = ticketPO
+      self ! FindUserInfo
     }
   }
 }
@@ -174,8 +215,16 @@ class CommitActor extends Actor with ActorLogging {
 
 object CommitActor {
 
-  case class FirstCommit(ticket: TicketPO)
+  case class StartCommit(ticket: TicketPO)
 
-  case class FinalCommit(code: String)
+  private case class FirstCommit()
+
+  private case class FinalCommit(code: String)
+
+  private case class SecondCommit()
+
+  case class CommitFailure()
+
+  case class FindUserInfo()
 
 }

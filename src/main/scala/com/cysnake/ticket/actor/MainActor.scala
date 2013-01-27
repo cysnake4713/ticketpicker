@@ -6,7 +6,7 @@ import akka.util.Timeout
 import akka.actor.SupervisorStrategy.{Stop, Restart}
 import akka.event.LoggingReceive
 import com.cysnake.ticket.actor.SearchActor._
-import com.cysnake.ticket.actor.CommitActor.FirstCommit
+import com.cysnake.ticket.actor.CommitActor.{CommitFailure, StartCommit, FirstCommit}
 import com.cysnake.ticket.po.{AccountPO, TicketPO}
 
 /**
@@ -56,8 +56,12 @@ class MainActor extends Actor with ActorLogging {
 
     case SearchSuccess(ticketPO) => {
       log.info("searchSuccess")
-      ticket = ticketPO
-      commitActor ! FirstCommit(ticket)
+//      ticket = ticketPO
+      commitActor ! StartCommit(ticketPO)
+    }
+
+    case CommitFailure => {
+      searchActor ! StartSearchTrain(ticket)
     }
     case Terminated(actorRef) if actorRef == loginActor =>
       log.debug("loginActor terminated. shutdown now.")

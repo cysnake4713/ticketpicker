@@ -31,7 +31,9 @@ class SearchActor extends Actor with ActorLogging {
     super.postRestart(reason)
     if (reason.isInstanceOf[OrderPageException]) {
       ticket = reason.asInstanceOf[OrderPageException].ticket
-    }
+    } else if (reason.isInstanceOf[SearchTrainMatchException])
+      ticket = reason.asInstanceOf[SearchTrainMatchException].ticket
+
     self ! SearchAllTrain
   }
 
@@ -49,6 +51,8 @@ class SearchActor extends Actor with ActorLogging {
           log.debug("searchAllTrain result:" + context1)
           try {
             val values = getArray(context1, ticket.trainName)
+            ticket.fromCode = values(4)
+            ticket.toCode = values(5)
             ticket.fromName = values(7)
             ticket.toName = values(8)
             ticket.startTime = values(2)
@@ -180,7 +184,7 @@ class SearchActor extends Actor with ActorLogging {
       }
       temp.split("#")
     } else {
-      throw new SearchTrainMatchException("not find match train!! seems error here!")
+      throw new SearchTrainMatchException("not find match train!! seems error here!", ticket)
     }
   }
 
@@ -197,7 +201,7 @@ object SearchActor {
 
   private case class GetOrderPage()
 
-  case class SearchTrainMatchException(msg: String) extends RuntimeException(msg)
+  case class SearchTrainMatchException(msg: String, ticket: TicketPO) extends RuntimeException(msg)
 
   case class OrderPageException(ticket: TicketPO) extends RuntimeException
 

@@ -18,12 +18,11 @@ import util.CommonTools
 
 object Main {
   def main(args: Array[String]) {
-    println(args(1))
     if (args.length > 1 && args(1) == "true") {
       HttpsUtil.useProxy = true
     }
     val account = try {
-      CommonTools.createAccountFromFile(args(0) + """\account.xml""")
+      CommonTools.createAccountFromFile(args(0) + """/account.xml""")
     } catch {
       case ex: Exception => {
         println("account.xml load error!:" + ex.toString)
@@ -31,7 +30,7 @@ object Main {
       }
     }
     val ticket = try {
-      CommonTools.createTicketFromFile(args(0) + """\ticket.xml""")
+      CommonTools.createTicketFromFile(args(0) + """/ticket.xml""")
     } catch {
       case ex: Exception => {
         println("ticket.xml load error!:" + ex.toString)

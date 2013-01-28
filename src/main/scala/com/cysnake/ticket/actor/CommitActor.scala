@@ -4,7 +4,6 @@ import akka.actor.{ActorLogging, Actor}
 import com.cysnake.har.HarEntity
 import org.apache.http.client.methods.{HttpPost, HttpGet}
 import java.net.URI
-import com.cysnake.ticket.actor.SocketActor.{Response, Request}
 import java.util
 import org.apache.http.NameValuePair
 import org.apache.http.message.BasicNameValuePair
@@ -12,7 +11,6 @@ import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.util.EntityUtils
 import com.cysnake.ticket.po.TicketPO
 import com.cysnake.ticket.actor.CommitActor._
-import com.cysnake.ticket.actor.CodeActor.{GetCodeSuccess, GetCode}
 import org.json.{JSONException, JSONObject}
 import com.cysnake.ticket.actor.CommitActor.SecondCommit
 import com.cysnake.ticket.actor.CodeActor.GetCode
@@ -88,7 +86,6 @@ class CommitActor extends Actor with ActorLogging {
 
         case SecondCommit => {
           log.debug("entity is: " + EntityUtils.toString(response.getEntity))
-          //TODO:
           self ! FinalCommit
         }
       }
@@ -180,7 +177,6 @@ class CommitActor extends Actor with ActorLogging {
       val har = new HarEntity(path)
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
       val formParams = new util.ArrayList[NameValuePair]
-      //TODO: update the ticket info
       val ticketInfo = ticket.seat + ",0,1," + ticket.passengerName + ",1," + ticket.passengerId + "," + ticket.passengerPhone + ",N"
       formParams add new BasicNameValuePair("org.apache.struts.taglib.html.TOKEN", ticket.token)
       formParams add new BasicNameValuePair("leftTicketStr", ticket.leftTiketToken)

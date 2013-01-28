@@ -4,7 +4,6 @@ import akka.actor.{ActorLogging, Actor}
 import com.cysnake.har.HarEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.json.{JSONTokener, JSONObject}
-import java.io._
 
 import akka.util.Timeout
 import akka.util.duration._
@@ -17,7 +16,6 @@ import javax.swing.ImageIcon
 import javax.imageio.ImageIO
 import com.cysnake.ticket.po.AccountPO
 import org.apache.http.util.EntityUtils
-import scala.util.matching.Regex
 
 //import com.cysnake.ticket.ui.CodeFrame
 

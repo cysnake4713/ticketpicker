@@ -93,7 +93,6 @@ class SearchActor extends Actor with ActorLogging {
         }
 
         case PreOrder(entity) => {
-          // TODO: when failure what do you do and how you define failure
           httpRequest.releaseConnection()
           self ! GetOrderPage
         }

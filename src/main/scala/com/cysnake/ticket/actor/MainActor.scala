@@ -6,7 +6,7 @@ import akka.util.Timeout
 import akka.actor.SupervisorStrategy.{Stop, Restart}
 import akka.event.LoggingReceive
 import com.cysnake.ticket.actor.SearchActor._
-import com.cysnake.ticket.actor.CommitActor.{CommitSuccess, CommitFailure, StartCommit, FirstCommit}
+import com.cysnake.ticket.actor.CommitActor.{CommitSuccess, CommitFailure, StartCommit}
 import com.cysnake.ticket.po.{AccountPO, TicketPO}
 
 /**
@@ -21,7 +21,7 @@ class MainActor extends Actor with ActorLogging {
   import com.cysnake.ticket.actor.MainActor._
   import com.cysnake.ticket.actor.LoginActor._
 
-  override val supervisorStrategy = OneForOneStrategy(maxNrOfRetries = 4, withinTimeRange = 20.seconds) {
+  override val supervisorStrategy = OneForOneStrategy(maxNrOfRetries = 4, withinTimeRange = 30.seconds) {
     case _: LoginActor.LoginException => Restart
     case _: SocketActor.SocketException => Restart
     case _: SearchTrainMatchException => Restart

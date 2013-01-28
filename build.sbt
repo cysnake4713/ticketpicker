@@ -1,6 +1,6 @@
 seq(com.github.retronym.SbtOneJar.oneJarSettings: _*)
 
-name := "tickpicker"
+name := "ticketpicker"
 
 version := "1.0"
 

@@ -50,7 +50,7 @@ class MainActor extends Actor with ActorLogging {
     }
 
     case LoginSuccess => {
-      log.debug("start search Train info.")
+      log.info("start search Train info.")
       searchActor ! StartSearchTrain(ticket)
     }
 
@@ -69,17 +69,17 @@ class MainActor extends Actor with ActorLogging {
       searchActor ! StartSearchTrain(ticket)
     }
     case Terminated(actorRef) if actorRef == loginActor =>
-      log.debug("loginActor terminated. shutdown now.")
+      log.info("loginActor terminated. shutdown now.")
       context.system.shutdown()
       sys.exit(0)
 
     case Terminated(actorRef) if actorRef == searchActor =>
-      log.debug("searchActor terminated. shutdown now.")
+      log.info("searchActor terminated. shutdown now.")
       context.system.shutdown()
       sys.exit(0)
 
     case Terminated(actorRef) => {
-      log.debug("shit happens")
+      log.error("shit happens")
       context.system.shutdown()
       sys.exit(0)
     }

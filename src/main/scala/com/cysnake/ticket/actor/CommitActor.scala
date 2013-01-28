@@ -93,7 +93,7 @@ class CommitActor extends Actor with ActorLogging {
     ///////---------------------------------------------------------------------------------////////////////////////
 
     case SecondCommit => {
-      log.debug("---------------------------SecondCommit--------------------------------------")
+      log.info("---------------------------SecondCommit--------------------------------------")
       val path = """/head/11.SecondCommit.har"""
       val httpGet = new HarEntity(path).generateHttpRequest.asInstanceOf[HttpGet]
       val httpUrl =
@@ -108,7 +108,7 @@ class CommitActor extends Actor with ActorLogging {
 
 
     case GetCodeSuccess(codePO) => {
-      log.debug("-------------------GetCodeSuccess: %s -----------------------------" format codePO)
+      log.info("-------------------GetCodeSuccess: %s -----------------------------" format codePO)
       this.code = codePO
       self ! FirstCommit
 
@@ -119,7 +119,7 @@ class CommitActor extends Actor with ActorLogging {
     }
 
     case FirstCommit => {
-      log.debug("-------------------------firstCommit------------------------------")
+      log.info("-------------------------firstCommit------------------------------")
       val path = "/head/10.firstCommit.har"
       val har = new HarEntity(path)
       val ticketInfo = ticket.seat + ",0,1," + ticket.passengerName + ",1," + ticket.passengerId + "," + ticket.passengerPhone + ",N"
@@ -172,7 +172,7 @@ class CommitActor extends Actor with ActorLogging {
 
     case FinalCommit => {
       Thread.sleep(3000)
-      log.debug("---------------------------FinalCommit----------------------------------")
+      log.info("---------------------------FinalCommit----------------------------------")
       val path = "/head/12.thirdCommit.har"
       val har = new HarEntity(path)
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
@@ -227,6 +227,7 @@ class CommitActor extends Actor with ActorLogging {
     }
 
     case StartCommit(ticketPO) => {
+      log.info("------------------------startCommit--------------------------------------")
       ticket = ticketPO
       self ! GetCode
     }

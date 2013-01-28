@@ -85,7 +85,7 @@ class LoginActor extends Actor with ActorLogging {
             finally {
               httpRequest.releaseConnection()
             }
-            log.debug("IsLogin result: success")
+            log.info("IsLogin result: success")
             context.parent ! LoginSuccess
 
           }
@@ -98,7 +98,7 @@ class LoginActor extends Actor with ActorLogging {
     }
 
     case GetCookie => {
-      log.debug("===================GetCookie===========================")
+      log.info("===================GetCookie===========================")
       val path = "/head/1.getCookie.har"
       val har = new HarEntity(path)
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
@@ -106,7 +106,7 @@ class LoginActor extends Actor with ActorLogging {
     }
 
     case GetLoginCode => {
-      log.debug("send Get Code to getCodeActor")
+      log.info("-------------------send Get Code to getCodeActor-----------------------")
       val path = "/head/2.getLoginCode.har"
       codeActor ! GetCode(path, self)
     }
@@ -117,12 +117,12 @@ class LoginActor extends Actor with ActorLogging {
     }
 
     case GetCodeFailure => {
-      log.info("get code failure! retry -------------------------->>>>")
+      log.warning("get code failure! retry -------------------------->>>>")
       throw new LoginException(account)
     }
 
     case LoginFirst(code) => {
-      log.debug("------------------LoginFirst-----------------------")
+      log.info("------------------LoginFirst-----------------------")
       val path = """/head/3.FirstLogin.har"""
       val har = new HarEntity(path)
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
@@ -130,7 +130,7 @@ class LoginActor extends Actor with ActorLogging {
     }
 
     case LoginSecond(code, rand) => {
-      log.debug("--------------------------LoginSecond------------------------------")
+      log.info("--------------------------LoginSecond------------------------------")
       val path = "/head/4.Secondlogin.har"
       val har = new HarEntity(path)
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
@@ -151,7 +151,7 @@ class LoginActor extends Actor with ActorLogging {
 
 
     case IsLogin => {
-      log.debug("-------------------------IsLogin-------------------------------")
+      log.info("-------------------------IsLogin-------------------------------")
       val path = "/head/5.isLogin.har"
       val har = new HarEntity(path)
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]

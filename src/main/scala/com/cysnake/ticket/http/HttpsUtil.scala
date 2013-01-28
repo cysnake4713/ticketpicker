@@ -1,7 +1,7 @@
 package com.cysnake.ticket.http
 
 import com.cysnake.http.CommonHttpUtil
-
+import org.apache.http.client.HttpClient
 
 /**
  * This code is written by matt.cai and if you want use it, feel free!
@@ -11,9 +11,16 @@ import com.cysnake.http.CommonHttpUtil
  * if you have problem here, please contact me: cysnake4713@gmail.com
  */
 object HttpsUtil {
-  private val httpsUtil = CommonHttpUtil.getCustomHttpClient(withProxy = true)
 
-  def getHttpClient = httpsUtil
+  var useProxy = false
+  private var httpsUtil: HttpClient = null
+
+  def getHttpClient: HttpClient = {
+    if (httpsUtil == null)
+      httpsUtil = CommonHttpUtil.getCustomHttpClient(withProxy = useProxy)
+    httpsUtil
+  }
+
 
 }
 

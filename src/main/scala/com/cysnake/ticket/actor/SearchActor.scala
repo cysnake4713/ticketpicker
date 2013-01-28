@@ -105,12 +105,12 @@ class SearchActor extends Actor with ActorLogging {
               case tokenRegx(value) => value
               case _ => ""
             }
-            val leftTicketRegx = """.*name=\"leftTicketStr\"\s*id=\"left\_ticket\"\s*value\=\"(\w{30})\".*""".r
+            val leftTicketRegx = """.*name=\"leftTicketStr\"\s*id=\"left\_ticket\"\s*value\=\"(\d*)\".*""".r
             val leftTicket = contextResponse match {
               case leftTicketRegx(value) => value
               case _ => ""
             }
-            log.debug("token is: " + token + " left token is: " + leftTicket)
+            log.info("token is: " + token + " left token is: " + leftTicket)
             if (token != "" && leftTicket != "") {
               ticket.token = token
               ticket.leftTiketToken = leftTicket
@@ -129,7 +129,7 @@ class SearchActor extends Actor with ActorLogging {
     }
 
     case GetOrderPage => {
-      log.debug("-------------------------GetOrderPage-------------------------------------")
+      log.info("-------------------------GetOrderPage-------------------------------------")
       val path = "/head/8.getOrderPage.har"
       val har = new HarEntity(path)
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
@@ -137,7 +137,7 @@ class SearchActor extends Actor with ActorLogging {
     }
 
     case PreOrder(entity) => {
-      log.debug("--------------------------preOrder----------------------------------------")
+      log.info("--------------------------preOrder----------------------------------------")
       val path = """/head/7.preOrder.har"""
       val har = new HarEntity(path)
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
@@ -146,7 +146,7 @@ class SearchActor extends Actor with ActorLogging {
     }
 
     case SearchAllTrain => {
-      log.debug("--------------------------searchAllTrain-----------------------------------")
+      log.info("--------------------------searchAllTrain-----------------------------------")
       val har = new HarEntity("/head/6.searchAllTrain.har")
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
       val httpUrl = """https://dynamic.12306.cn/otsweb/order/querySingleAction.do?""" +
@@ -172,13 +172,13 @@ class SearchActor extends Actor with ActorLogging {
         trainLine = re
       }
     }
-    log.debug("match line is :" + trainLine)
+    log.info("match line is :" + trainLine)
     if (trainLine != "") {
       val regx2 = """.*javascript:getSelected\(\'(.*)\'\).*""".r
       val temp = trainLine match {
         case regx2(key) => key
         case _ =>
-          log.info("this train is out of order!!, retry ----->")
+          log.warning("this train is out of order!!, retry ----->")
           throw new UnOrderAble("this train is out of order!!, retry ----->")
       }
       temp.split("#")

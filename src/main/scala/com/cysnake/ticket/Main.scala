@@ -4,6 +4,7 @@ import actor.MainActor
 import actor.MainActor._
 import actor.ui.CodeDialog
 import akka.actor.{Props, ActorSystem}
+import http.HttpsUtil
 import util.CommonTools
 
 /**
@@ -17,8 +18,12 @@ import util.CommonTools
 
 object Main {
   def main(args: Array[String]) {
+    println(args(1))
+    if (args.length > 1 && args(1) == "true") {
+      HttpsUtil.useProxy = true
+    }
     val account = try {
-      CommonTools.createAccountFromFile(args(0))
+      CommonTools.createAccountFromFile(args(0) + """\account.xml""")
     } catch {
       case ex: Exception => {
         println("account.xml load error!:" + ex.toString)
@@ -26,7 +31,7 @@ object Main {
       }
     }
     val ticket = try {
-      CommonTools.createTicketFromFile(args(1))
+      CommonTools.createTicketFromFile(args(0) + """\ticket.xml""")
     } catch {
       case ex: Exception => {
         println("ticket.xml load error!:" + ex.toString)
@@ -38,7 +43,7 @@ object Main {
     val system = ActorSystem("MySystem")
     val mainActor = system.actorOf(Props[MainActor], name = "mainActor")
     mainActor ! StartMain(account, ticket)
-    Iterator.continually(Console.readLine()).takeWhile(_ != "exit").foreach(line => line match {
+    Iterator.continually(Console.readLine()).takeWhile(_ != "asldfa;lskdf;a").foreach(line => line match {
       case "exit" =>
         mainActor ! StopMain
         sys.exit(0)

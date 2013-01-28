@@ -58,7 +58,7 @@ class CodeActor extends Actor with ActorLogging {
     }
 
     case GetCode(path: String, sourceActor) => {
-      log.debug("================GetCode============================== from: %s" format sourceActor.path)
+      log.info("================GetCode============================== from: %s" format sourceActor.path)
       val har = new HarEntity(path)
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
       val socket = context.actorFor("/user/mainActor/socketActor")

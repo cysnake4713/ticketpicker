@@ -29,7 +29,7 @@ class SocketActor extends Actor with ActorLogging {
   protected def receive: SocketActor#Receive = {
 
     case Request(httpRequest: HttpRequestBase, requestType: ScalaObject) => {
-      log.debug("get request from:" + sender)
+      log.info("get request from:" + sender)
       log.debug("-------------------request url: %s----------------------" format httpRequest.getURI)
       log.debug("request method:" + httpRequest.getMethod)
       //      log.debug("request param:" + httpRequest.getParams)

@@ -50,7 +50,15 @@ class CommitActor extends Actor with ActorLogging {
         }
         case FinalCommit => {
           val target = EntityUtils.toString(response.getEntity)
+          httpRequest.releaseConnection()
           log.debug("entity: " + target)
+          val result = new JSONObject(target)
+          if (result.get("errMsg").toString == "Y") {
+            log.info("order success!!! quit!-*****************************************>>>>>>>>>>>>>>>>>")
+            context.parent ! CommitSuccess
+          } else {
+            context.parent ! CommitFailure
+          }
           httpRequest.releaseConnection()
 
         }
@@ -161,12 +169,12 @@ class CommitActor extends Actor with ActorLogging {
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
       httpPost.setURI(new URI(httpPost.getURI + "&rand=%s".format(code)))
       httpPost.setEntity(entity)
-      Thread.sleep(5000)
+
       socketActor ! Request(httpPost, FirstCommit)
     }
 
     case FinalCommit => {
-      Thread.sleep(5000)
+      Thread.sleep(3000)
       log.debug("---------------------------FinalCommit----------------------------------")
       val path = "/head/12.thirdCommit.har"
       val har = new HarEntity(path)
@@ -240,8 +248,11 @@ object CommitActor {
 
   private case class SecondCommit()
 
+
+  private case class FindUserInfo()
+
   case class CommitFailure()
 
-  case class FindUserInfo()
+  case class CommitSuccess()
 
 }

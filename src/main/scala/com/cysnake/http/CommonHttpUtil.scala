@@ -10,8 +10,9 @@ import org.apache.http.params.{BasicHttpParams, HttpParams, HttpConnectionParams
 import org.apache.http.client.params.{CookiePolicy, ClientPNames}
 import org.apache.http.conn.ClientConnectionManager
 import org.apache.http.impl.conn.PoolingClientConnectionManager
-import org.apache.http.impl.client.{BasicCookieStore, DefaultHttpClient}
 import org.apache.http._
+import client.protocol.{ResponseContentEncoding, RequestAcceptEncoding}
+import impl.client.{DecompressingHttpClient, BasicCookieStore, DefaultHttpClient}
 import org.apache.http.conn.params.ConnRoutePNames
 import org.apache.http.client.entity.GzipDecompressingEntity
 import protocol.HttpContext
@@ -63,6 +64,9 @@ object CommonHttpUtil {
     val cookieStore: CookieStore = new BasicCookieStore
     httpClient.setCookieStore(cookieStore)
     seInterceptor(httpClient)
+    //    httpClient.addRequestInterceptor(new RequestAcceptEncoding)
+    //    httpClient.addResponseInterceptor(new ResponseContentEncoding)
+    //    new DecompressingHttpClient(httpClient)
     httpClient
   }
 

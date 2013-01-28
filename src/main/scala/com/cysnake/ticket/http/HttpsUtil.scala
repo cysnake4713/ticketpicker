@@ -11,7 +11,7 @@ import com.cysnake.http.CommonHttpUtil
  * if you have problem here, please contact me: cysnake4713@gmail.com
  */
 object HttpsUtil {
-  private val httpsUtil = CommonHttpUtil.getCustomHttpClient(withProxy = false)
+  private val httpsUtil = CommonHttpUtil.getCustomHttpClient(withProxy = true)
 
   def getHttpClient = httpsUtil
 

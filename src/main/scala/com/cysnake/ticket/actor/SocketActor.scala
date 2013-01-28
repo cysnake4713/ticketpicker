@@ -4,7 +4,7 @@ import akka.actor.{ActorLogging, Actor}
 import com.cysnake.ticket.http.HttpsUtil
 import org.apache.http.client.methods.{HttpGet, HttpPost, HttpRequestBase}
 import org.apache.http.{NameValuePair, HttpResponse}
-import org.apache.http.impl.client.DefaultHttpClient
+import org.apache.http.impl.client.{DecompressingHttpClient, DefaultHttpClient}
 import org.apache.http.client.utils.URLEncodedUtils
 
 /**
@@ -45,7 +45,7 @@ class SocketActor extends Actor with ActorLogging {
       if (httpRequest.isInstanceOf[HttpGet]) {
         log.debug("get request query: %s" format httpRequest.getURI.getQuery)
       }
-      log.debug("cookis is :" + httpClient.asInstanceOf[DefaultHttpClient].getCookieStore.getCookies)
+//      log.debug("cookis is :" + httpClient.asInstanceOf[DecompressingHttpClient].getCookieStore.getCookies)
       try {
         val response = httpClient.execute(httpRequest)
         log.info("reponse status: " + response.getStatusLine)

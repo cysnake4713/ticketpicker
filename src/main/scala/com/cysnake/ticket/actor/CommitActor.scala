@@ -13,7 +13,7 @@ import org.apache.http.util.EntityUtils
 import com.cysnake.ticket.po.TicketPO
 import com.cysnake.ticket.actor.CommitActor._
 import com.cysnake.ticket.actor.CodeActor.{GetCodeSuccess, GetCode}
-import org.json.JSONObject
+import org.json.{JSONException, JSONObject}
 import com.cysnake.ticket.actor.CommitActor.SecondCommit
 import com.cysnake.ticket.actor.CodeActor.GetCode
 import com.cysnake.ticket.actor.CommitActor.FinalCommit
@@ -55,17 +55,26 @@ class CommitActor extends Actor with ActorLogging {
 
         }
 
-        case GetCodeSuccess => {
+        case FirstCommit => {
           val target = EntityUtils.toString(response.getEntity)
           log.debug("entity: " + target)
-          val resultJson = new JSONObject(target)
-          if (resultJson.get("errMsg").toString == "Y") {
-            log.debug("first commit success!")
-            self ! SecondCommit
-          } else {
-            context.parent ! CommitFailure
+          try {
+            val resultJson = new JSONObject(target)
+            if (resultJson.get("errMsg").toString == "Y") {
+              log.debug("first commit success!")
+              self ! SecondCommit
+            } else {
+              context.parent ! CommitFailure
+            }
+            httpRequest.releaseConnection()
+
+          } catch {
+            case ex: JSONException => {
+              log.info("first commit failure, reload")
+              context.parent ! CommitFailure
+
+            }
           }
-          httpRequest.releaseConnection()
 
         }
 
@@ -76,6 +85,7 @@ class CommitActor extends Actor with ActorLogging {
         }
       }
     }
+    ///////---------------------------------------------------------------------------------////////////////////////
 
     case SecondCommit => {
       log.debug("---------------------------SecondCommit--------------------------------------")
@@ -95,6 +105,16 @@ class CommitActor extends Actor with ActorLogging {
     case GetCodeSuccess(codePO) => {
       log.debug("-------------------GetCodeSuccess: %s -----------------------------" format codePO)
       this.code = codePO
+      self ! FirstCommit
+
+    }
+
+    case GetCode => {
+      codeActor ! GetCode("/head/9.getCommitCode.har", self)
+    }
+
+    case FirstCommit => {
+      log.debug("-------------------------firstCommit------------------------------")
       val path = "/head/10.firstCommit.har"
       val har = new HarEntity(path)
       val ticketInfo = ticket.seat + ",0,1," + ticket.passengerName + ",1," + ticket.passengerId + "," + ticket.passengerPhone + ",N"
@@ -141,15 +161,12 @@ class CommitActor extends Actor with ActorLogging {
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
       httpPost.setURI(new URI(httpPost.getURI + "&rand=%s".format(code)))
       httpPost.setEntity(entity)
-      socketActor ! Request(httpPost, GetCodeSuccess)
-    }
-
-    case FirstCommit => {
-      log.debug("-------------------------firstCommit------------------------------")
-      codeActor ! GetCode("/head/9.getCommitCode.har", self)
+      Thread.sleep(5000)
+      socketActor ! Request(httpPost, FirstCommit)
     }
 
     case FinalCommit => {
+      Thread.sleep(5000)
       log.debug("---------------------------FinalCommit----------------------------------")
       val path = "/head/12.thirdCommit.har"
       val har = new HarEntity(path)
@@ -207,7 +224,7 @@ class CommitActor extends Actor with ActorLogging {
 
     case StartCommit(ticketPO) => {
       ticket = ticketPO
-      self ! FindUserInfo
+      self ! GetCode
     }
   }
 }

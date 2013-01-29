@@ -74,9 +74,9 @@ class SearchActor extends Actor with ActorLogging {
             formParams add new BasicNameValuePair("train_class_arr", "QB#D#Z#T#K#QT#")
             formParams add new BasicNameValuePair("start_time_str", ticket.time)
             formParams add new BasicNameValuePair("lishi", values(1))
-            formParams add new BasicNameValuePair("train_start_time", values(2))
-            formParams add new BasicNameValuePair("trainno4", values(3))
-            formParams add new BasicNameValuePair("arrive_time", values(6))
+            formParams add new BasicNameValuePair("train_start_time", ticket.startTime)
+            formParams add new BasicNameValuePair("trainno4", ticket.trainCode)
+            formParams add new BasicNameValuePair("arrive_time", ticket.endTime)
             formParams add new BasicNameValuePair("from_station_name", ticket.fromName)
             formParams add new BasicNameValuePair("to_station_name", ticket.toName)
             formParams add new BasicNameValuePair("from_station_no", values(9))
@@ -100,12 +100,12 @@ class SearchActor extends Actor with ActorLogging {
         case GetOrderPage => {
           if (response.getStatusLine.getStatusCode == HttpStatus.SC_OK) {
             val contextResponse = EntityUtils.toString(response.getEntity).trim.replaceAll("[\n\r]", "")
-            val tokenRegx = """.*name\=\"org\.apache\.struts\.taglib\.html\.TOKEN\"\s*value\=\"(\w{32})\"\>.*""".r
+            val tokenRegx = """.*name\=\"org\.apache\.struts\.taglib\.html\.TOKEN\"\s*value\=\"(\w*?)\"\s*\>.*""".r
             val token = contextResponse match {
               case tokenRegx(value) => value
               case _ => ""
             }
-            val leftTicketRegx = """.*name=\"leftTicketStr\"\s*id=\"left\_ticket\"\s*value\=\"(\d*)\".*""".r
+            val leftTicketRegx = """.*orderRequest\.train\_no\"\s*value\=\"([a-z0-9A-Z_]*)\".*""".r
             val leftTicket = contextResponse match {
               case leftTicketRegx(value) => value
               case _ => ""
@@ -147,12 +147,14 @@ class SearchActor extends Actor with ActorLogging {
 
     case SearchAllTrain => {
       log.info("--------------------------searchAllTrain-----------------------------------")
+      log.info("search Train: from->%s  to->%s  date->%s" format(ticket.searchFromCode, ticket.searchToCode, ticket.date))
+      Thread.sleep(1000)
       val har = new HarEntity("/head/6.searchAllTrain.har")
       val httpGet = har.generateHttpRequest.asInstanceOf[HttpGet]
       val httpUrl = """https://dynamic.12306.cn/otsweb/order/querySingleAction.do?""" +
         """method=queryLeftTicket&orderRequest.train_date=""" + ticket.date +
-        """&orderRequest.from_station_telecode=""" + ticket.fromCode +
-        """&orderRequest.to_station_telecode=""" + ticket.toCode +
+        """&orderRequest.from_station_telecode=""" + ticket.searchFromCode +
+        """&orderRequest.to_station_telecode=""" + ticket.searchToCode +
         """&orderRequest.train_no=&trainPassType=QB&trainClass=QB%23D%23Z%23T%23K%23QT%23&""" +
         """includeStudent=00&seatTypeAndNum=&orderRequest.start_time_str=00%3A00--24%3A00"""
       httpGet.setURI(new URI(httpUrl))

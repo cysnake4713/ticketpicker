@@ -10,31 +10,33 @@
 <configuration>
     <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%5p [%c] %m%n</pattern>
+            <pattern>[%c{1}] %m%n</pattern>
         </encoder>
     </appender>
     <appender name="R" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <Encoding>UTF-8</Encoding>
-        <File>../log/system.log</File>
-        <layout class="ch.qos.logback.classic.PatternLayout">
+        <file>./log/system.log</file>
+        <encoder>
             <Pattern>
                 %d{HH:mm:ss} %5p [%c] %m%n
             </Pattern>
-        </layout>
-        <rollingPolicy
-                class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-            <maxIndex>2</maxIndex>
-            <FileNamePattern>../log/server.log.%i</FileNamePattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <maxHistory>5</maxHistory>
+            <fileNamePattern>./log/system-%d{yyyy-MM-dd_HH-mm}.%i.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy
+                    class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <!-- or whenever the file size reaches 100MB -->
+                <maxFileSize>20MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
         </rollingPolicy>
-        <triggeringPolicy
-                class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <MaxFileSize>10MB</MaxFileSize>
-        </triggeringPolicy>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>DEBUG</level>
+            <onMatch>DENY</onMatch>
+            <onMismatch>ACCEPT</onMismatch>
+        </filter>
     </appender>
-
     <logger name="org.apache.http.wire" level="ERROR"/>
     <logger name="org.apache.http" level="INFO"/>
-    <logger name="com.cysnake.ticket.actor.SocketActor" level="INFO"/>
     <root level="DEBUG">
         <appender-ref ref="stdout"/>
         <appender-ref ref="R"/>

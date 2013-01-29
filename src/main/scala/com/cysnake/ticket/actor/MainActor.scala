@@ -16,7 +16,7 @@ import com.cysnake.ticket.po.{AccountPO, TicketPO}
  * Time: 11:17 AM
  * if you have problem here, please contact me: cysnake4713@gmail.com
  */
-class MainActor extends Actor with ActorLogging {
+class MainActor(val account: AccountPO, val ticket: TicketPO) extends Actor with ActorLogging {
 
   import com.cysnake.ticket.actor.MainActor._
   import com.cysnake.ticket.actor.LoginActor._
@@ -39,13 +39,9 @@ class MainActor extends Actor with ActorLogging {
   val searchActor = context.watch(context.actorOf(Props[SearchActor], name = "searchActor"))
   val commitActor = context.watch(context.actorOf(Props[CommitActor], name = "commitActor"))
 
-  var account: AccountPO = null
-  var ticket: TicketPO = null
 
   override def receive: Receive = LoggingReceive {
-    case StartMain(accountPO, ticketPO) => {
-      this.account = accountPO
-      this.ticket = ticketPO
+    case StartMain => {
       loginActor ! StartLogin(account)
     }
 
@@ -96,7 +92,7 @@ class MainActor extends Actor with ActorLogging {
 
 object MainActor {
 
-  case class StartMain(account: AccountPO, ticket: TicketPO)
+  case class StartMain()
 
   case class StopMain()
 

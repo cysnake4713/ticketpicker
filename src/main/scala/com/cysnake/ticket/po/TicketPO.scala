@@ -24,4 +24,8 @@ class TicketPO {
   var passengerName: String = ""
   var passengerId: String = ""
   var passengerPhone: String = ""
+  var searchFromCode = ""
+  var searchToCode = ""
+  var searchFromName = ""
+  var searchToName = ""
 }

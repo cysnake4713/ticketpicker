@@ -18,6 +18,7 @@ import util.CommonTools
 
 object Main {
   def main(args: Array[String]) {
+    //load xml file
     if (args.length > 1 && args(1) == "true") {
       HttpsUtil.useProxy = true
     }
@@ -38,17 +39,36 @@ object Main {
       }
     }
 
+    //search ticket code
+    val ticketStationMap = try {
+      CommonTools.createTicketStationMap
+    }
+    println()
+    if (ticketStationMap.contains(ticket.searchFromName)) {
+      ticket.searchFromCode = ticketStationMap(ticket.searchFromName)
+    } else {
+      println("your from station not find!! please check your input.")
+      sys.exit(1)
+    }
+
+    if (ticketStationMap.contains(ticket.searchToName)) {
+      ticket.searchToCode = ticketStationMap(ticket.searchToName)
+    } else {
+      println("your to station not find!! please check your input.")
+      sys.exit(1)
+    }
+
+
     println("start")
     val system = ActorSystem("MySystem")
-    val mainActor = system.actorOf(Props[MainActor], name = "mainActor")
-    mainActor ! StartMain(account, ticket)
-    Iterator.continually(Console.readLine()).takeWhile(_ != "asldfa;lskdf;a").foreach(line => line match {
+    val mainActor = system.actorOf(Props(new MainActor(account, ticket)), name = "mainActor")
+    mainActor ! StartMain
+    Iterator.continually(Console.readLine()).takeWhile(_ != "asldfa;lskdf;a").foreach(line => line.toLowerCase match {
       case "exit" =>
         mainActor ! StopMain
         sys.exit(0)
         CodeDialog.dispose()
       case _ =>
     })
-
   }
 }

@@ -15,8 +15,8 @@ object CommonTools {
     val ticketXml = XML.loadFile(path)
     val ticket = new TicketPO
     ticket.trainName = (ticketXml \ "ticket" \ "train").text
-    ticket.fromCode = (ticketXml \ "ticket" \ "from").text
-    ticket.toCode = (ticketXml \ "ticket" \ "to").text
+    ticket.searchFromName = (ticketXml \ "ticket" \ "from").text
+    ticket.searchToName = (ticketXml \ "ticket" \ "to").text
     ticket.date = (ticketXml \ "ticket" \ "date").text
     ticket.time = (ticketXml \ "ticket" \ "time").text
     ticket.seat = (ticketXml \ "ticket" \ "seat").text
@@ -30,5 +30,15 @@ object CommonTools {
     val AccountXml = XML.loadFile(path)
     val account = new AccountPO((AccountXml \ "account" \ "name").text, (AccountXml \ "account" \ "password").text)
     account
+  }
+
+  def createTicketStationMap: scala.collection.mutable.HashMap[String, String] = {
+    val map = scala.collection.mutable.HashMap.empty[String, String]
+    val lines = scala.io.Source.fromURL(getClass.getResource("/conf/station.file")).getLines()
+    for (line <- lines) {
+      val lineTemp = line.split('|')
+      map += lineTemp(1) -> lineTemp(2)
+    }
+    map
   }
 }

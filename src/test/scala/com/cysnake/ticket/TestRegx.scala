@@ -19,7 +19,7 @@ class TestRegx extends WordSpec with MustMatchers with BeforeAndAfterAll {
   override protected def beforeAll() {
     super.beforeAll()
     target = scala.io.Source.fromURL(getClass.getResource("/testfile/test.html"), "utf-8").mkString("")
-    tokenContext = scala.io.Source.fromURL(getClass.getResource("/testfile/test-token.html"), "utf-8").mkString("")
+    tokenContext = scala.io.Source.fromURL(getClass.getResource("/testfile/test-token.html"), "utf-8").mkString("").trim.replaceAll("[\n\r]", "")
   }
 
   "Target" must {
@@ -61,7 +61,8 @@ class TestRegx extends WordSpec with MustMatchers with BeforeAndAfterAll {
     }
 
     "regx token" in {
-      val tokenRegx = """.*name\=\"org\.apache\.struts\.taglib\.html\.TOKEN\"\s*value\=\"(\w{32})\"\>.*""".r
+      val tokenRegx = """.*name\=\"org\.apache\.struts\.taglib\.html\.TOKEN\"\s*value\=\"(\w*?)\"\s*\>.*""".r
+      println(tokenContext)
       val token = tokenContext match {
         case tokenRegx(value) => value
         case _ => ""
@@ -71,7 +72,7 @@ class TestRegx extends WordSpec with MustMatchers with BeforeAndAfterAll {
     }
 
     "regx leftticket" in {
-      val leftTicketRegx = """.*name=\"leftTicketStr\"\s*id=\"left\_ticket\"\s*value\=\"(\w{30})\".*""".r
+      val leftTicketRegx = """.*name=\"leftTicketStr\"\s*id=\"left\_ticket\"\s*value\=\"(.*?)\"\s\/.*""".r
       val leftTicket = tokenContext match {
         case leftTicketRegx(value) => value
         case _ => ""
@@ -81,7 +82,7 @@ class TestRegx extends WordSpec with MustMatchers with BeforeAndAfterAll {
     }
 
     "regx trainNum" in {
-      val trainNumRegx = """.*orderRequest\.train\_no\"\s*value\=\"(\w*)\".*""".r
+      val trainNumRegx = """.*orderRequest\.train\_no\"\s*value\=\"([a-z0-9A-Z_]*)\".*""".r
       val trainNum = tokenContext match {
         case trainNumRegx(value) => value
         case _ => ""

@@ -48,7 +48,7 @@ class SearchActor extends Actor with ActorLogging {
       requestType match {
         case SearchAllTrain => {
           val context1 = EntityUtils.toString(response.getEntity)
-          log.debug("searchAllTrain result:" + context1)
+//          log.debug("searchAllTrain result:" + context1)
           try {
             val values = getArray(context1, ticket.trainName)
             ticket.fromCode = values(4)
@@ -174,7 +174,7 @@ class SearchActor extends Actor with ActorLogging {
         trainLine = re
       }
     }
-    log.info("match line is :" + trainLine)
+    log.debug("match line is :" + trainLine)
     if (trainLine != "") {
       val regx2 = """.*javascript:getSelected\(\'(.*)\'\).*""".r
       val temp = trainLine match {

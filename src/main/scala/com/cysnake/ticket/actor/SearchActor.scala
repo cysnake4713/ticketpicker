@@ -174,7 +174,7 @@ class SearchActor extends Actor with ActorLogging {
         trainLine = re
       }
     }
-    log.debug("match line is :" + trainLine)
+//    log.debug("match line is :" + trainLine)
     if (trainLine != "") {
       val regx2 = """.*javascript:getSelected\(\'(.*)\'\).*""".r
       val temp = trainLine match {

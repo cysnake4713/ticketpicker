@@ -28,6 +28,7 @@ object CommonTools {
       passengerPO.phone = (passenger \ "phone").text
       ticket.passengers += passengerPO
     }
+    ticket.delay = Integer.parseInt((ticketXml \ "delay").text)
     ticket
   }
 

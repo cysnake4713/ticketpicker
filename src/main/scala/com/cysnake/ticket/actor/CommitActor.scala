@@ -48,7 +48,7 @@ class CommitActor extends Actor with ActorLogging {
         case FinalCommit => {
           val target = EntityUtils.toString(response.getEntity)
           httpRequest.releaseConnection()
-          log.debug("entity: " + target)
+          log.info("entity: " + target)
           val result = new JSONObject(target)
           if (result.get("errMsg").toString == "Y") {
             log.info("order success!!! quit!-*****************************************>>>>>>>>>>>>>>>>>")
@@ -172,7 +172,7 @@ class CommitActor extends Actor with ActorLogging {
     }
 
     case FinalCommit => {
-      Thread.sleep(3000)
+      Thread.sleep(ticket.delay * 1000)
       log.info("---------------------------FinalCommit----------------------------------")
       val path = "/head/12.thirdCommit.har"
       val har = new HarEntity(path)

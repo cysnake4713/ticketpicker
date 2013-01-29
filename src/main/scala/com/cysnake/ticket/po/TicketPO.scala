@@ -25,6 +25,7 @@ class TicketPO {
   var searchToCode = ""
   var searchFromName = ""
   var searchToName = ""
+  var delay = 0
 
   override def toString: String = "from:%s to:%s passengers:%s" format(searchFromName, searchToName, passengers)
 }

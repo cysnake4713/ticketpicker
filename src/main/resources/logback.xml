@@ -12,6 +12,11 @@
         <encoder>
             <pattern>[%c{1}] %m%n</pattern>
         </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>DEBUG</level>
+            <onMatch>DENY</onMatch>
+            <onMismatch>ACCEPT</onMismatch>
+        </filter>
     </appender>
     <appender name="R" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>./log/system.log</file>
@@ -29,14 +34,11 @@
                 <maxFileSize>20MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
         </rollingPolicy>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>DEBUG</level>
-            <onMatch>DENY</onMatch>
-            <onMismatch>ACCEPT</onMismatch>
-        </filter>
+
     </appender>
     <logger name="org.apache.http.wire" level="ERROR"/>
     <logger name="com.cysnake.ticket.actor.SocketActor" level="DEBUG"/>
+
     <logger name="org.apache.http" level="INFO"/>
     <root level="DEBUG">
         <appender-ref ref="stdout"/>

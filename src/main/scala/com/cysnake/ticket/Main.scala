@@ -26,7 +26,7 @@ object Main {
       CommonTools.createAccountFromFile(args(0) + """/account.xml""")
     } catch {
       case ex: Exception => {
-        println("account.xml load error!:" + ex.toString)
+        println("account.xml load error!:" + ex.printStackTrace)
         sys.exit(1)
       }
     }
@@ -34,7 +34,7 @@ object Main {
       CommonTools.createTicketFromFile(args(0) + """/ticket.xml""")
     } catch {
       case ex: Exception => {
-        println("ticket.xml load error!:" + ex.toString)
+        println("ticket.xml load error!:" + ex.printStackTrace)
         sys.exit(1)
       }
     }

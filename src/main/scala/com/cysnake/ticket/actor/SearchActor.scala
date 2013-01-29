@@ -105,7 +105,7 @@ class SearchActor extends Actor with ActorLogging {
               case tokenRegx(value) => value
               case _ => ""
             }
-            val leftTicketRegx = """.*orderRequest\.train\_no\"\s*value\=\"([a-z0-9A-Z_]*)\".*""".r
+            val leftTicketRegx = """.*name=\"leftTicketStr\"\s*id=\"left\_ticket\"\s*value\=\"(.*?)\"\s\/.*""".r
             val leftTicket = contextResponse match {
               case leftTicketRegx(value) => value
               case _ => ""

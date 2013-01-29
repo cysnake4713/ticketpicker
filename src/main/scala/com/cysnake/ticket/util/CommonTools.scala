@@ -1,6 +1,6 @@
 package com.cysnake.ticket.util
 
-import com.cysnake.ticket.po.{AccountPO, TicketPO}
+import com.cysnake.ticket.po.{PassengerPO, AccountPO, TicketPO}
 import xml.XML
 
 /**
@@ -19,10 +19,15 @@ object CommonTools {
     ticket.searchToName = (ticketXml \ "ticket" \ "to").text
     ticket.date = (ticketXml \ "ticket" \ "date").text
     ticket.time = (ticketXml \ "ticket" \ "time").text
-    ticket.seat = (ticketXml \ "ticket" \ "seat").text
-    ticket.passengerName = (ticketXml \ "ticket" \ "passenger" \ "name").text
-    ticket.passengerId = (ticketXml \ "ticket" \ "passenger" \ "id").text
-    ticket.passengerPhone = (ticketXml \ "ticket" \ "passenger" \ "phone").text
+    val passengerXml = (ticketXml \ "ticket" \\ "passenger")
+    for (passenger <- passengerXml) {
+      val passengerPO = new PassengerPO
+      passengerPO.seat = (passenger \ "seat").text
+      passengerPO.name = (passenger \ "name").text
+      passengerPO.id = (passenger \ "id").text
+      passengerPO.phone = (passenger \ "phone").text
+      ticket.passengers += passengerPO
+    }
     ticket
   }
 

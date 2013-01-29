@@ -43,7 +43,6 @@ object Main {
     val ticketStationMap = try {
       CommonTools.createTicketStationMap
     }
-    println()
     if (ticketStationMap.contains(ticket.searchFromName)) {
       ticket.searchFromCode = ticketStationMap(ticket.searchFromName)
     } else {
@@ -57,7 +56,6 @@ object Main {
       println("your to station not find!! please check your input.")
       sys.exit(1)
     }
-
 
     println("start")
     val system = ActorSystem("MySystem")

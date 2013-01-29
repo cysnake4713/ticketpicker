@@ -37,7 +37,6 @@ class CommitActor extends Actor with ActorLogging {
   var ticket: TicketPO = null
 
   override def receive: Receive = {
-
     case Response(response, httpRequest, requestType) => {
       requestType match {
 
@@ -101,7 +100,7 @@ class CommitActor extends Actor with ActorLogging {
           """method=getQueueCount&train_date=%s&train_no=%s&""" +
           """station=%s&seat=%s&from=%s&to=%s&ticket=%s""")
           .format(ticket.date, ticket.trainCode, ticket.trainName,
-          ticket.seat, ticket.fromCode, ticket.toCode, ticket.leftTiketToken)
+          ticket.passengers(0).seat, ticket.fromCode, ticket.toCode, ticket.leftTiketToken)
       httpGet.setURI(new URI((httpUrl)))
       socketActor ! Request(httpGet, SecondCommit)
     }
@@ -122,7 +121,6 @@ class CommitActor extends Actor with ActorLogging {
       log.info("-------------------------firstCommit------------------------------")
       val path = "/head/10.firstCommit.har"
       val har = new HarEntity(path)
-      val ticketInfo = ticket.seat + ",0,1," + ticket.passengerName + ",1," + ticket.passengerId + "," + ticket.passengerPhone + ",N"
       val formParams = new util.ArrayList[NameValuePair]
       formParams add new BasicNameValuePair("org.apache.struts.taglib.html.TOKEN", ticket.token)
       formParams add new BasicNameValuePair("leftTicketStr", ticket.leftTiketToken)
@@ -141,23 +139,26 @@ class CommitActor extends Actor with ActorLogging {
       formParams add new BasicNameValuePair("orderRequest.to_station_name", ticket.toName)
       formParams add new BasicNameValuePair("orderRequest.cancel_flag", "1")
       formParams add new BasicNameValuePair("orderRequest.id_mode", "Y")
-      formParams add new BasicNameValuePair("passengerTickets", ticketInfo)
-      formParams add new BasicNameValuePair("oldPassengers", "")
-      formParams add new BasicNameValuePair("passenger_1_seat", ticket.seat)
-      formParams add new BasicNameValuePair("passenger_1_ticket", "1")
-      formParams add new BasicNameValuePair("passenger_1_name", ticket.passengerName)
-      formParams add new BasicNameValuePair("passenger_1_cardtype", "1")
-      formParams add new BasicNameValuePair("passenger_1_cardno", ticket.passengerId)
-      formParams add new BasicNameValuePair("passenger_1_mobileno", ticket.passengerPhone)
-      formParams add new BasicNameValuePair("checkbox9", "Y")
-      formParams add new BasicNameValuePair("oldPassengers", "")
-      formParams add new BasicNameValuePair("checkbox9", "Y")
-      formParams add new BasicNameValuePair("oldPassengers", "")
-      formParams add new BasicNameValuePair("checkbox9", "Y")
-      formParams add new BasicNameValuePair("oldPassengers", "")
-      formParams add new BasicNameValuePair("checkbox9", "Y")
-      formParams add new BasicNameValuePair("oldPassengers", "")
-      formParams add new BasicNameValuePair("checkbox9", "Y")
+      //----------------------
+      var i = 1
+      for (passenger <- ticket.passengers) {
+        val ticketInfo = passenger.seat + ",0,1," + passenger.name + ",1," +
+          passenger.id + "," + passenger.phone + ",N"
+        formParams add new BasicNameValuePair("passengerTickets", ticketInfo)
+        formParams add new BasicNameValuePair("oldPassengers", "")
+        formParams add new BasicNameValuePair("passenger_%d_seat" format i, passenger.seat)
+        formParams add new BasicNameValuePair("passenger_%d_ticket" format i, "1")
+        formParams add new BasicNameValuePair("passenger_%d_name" format i, passenger.name)
+        formParams add new BasicNameValuePair("passenger_%d_cardtype" format i, "1")
+        formParams add new BasicNameValuePair("passenger_%d_cardno" format i, passenger.id)
+        formParams add new BasicNameValuePair("passenger_%d_mobileno" format i, passenger.phone)
+        i += 1
+      }
+      //-------------------------
+      for (i <- 1 to (5 - ticket.passengers.length)) {
+        formParams add new BasicNameValuePair("oldPassengers", "")
+        formParams add new BasicNameValuePair("checkbox9", "Y")
+      }
       formParams add new BasicNameValuePair("randCode", code)
       formParams add new BasicNameValuePair("tFlag", "dc")
       formParams add new BasicNameValuePair("orderRequest.reserve_flag", "A")
@@ -177,7 +178,6 @@ class CommitActor extends Actor with ActorLogging {
       val har = new HarEntity(path)
       val httpPost = har.generateHttpRequest.asInstanceOf[HttpPost]
       val formParams = new util.ArrayList[NameValuePair]
-      val ticketInfo = ticket.seat + ",0,1," + ticket.passengerName + ",1," + ticket.passengerId + "," + ticket.passengerPhone + ",N"
       formParams add new BasicNameValuePair("org.apache.struts.taglib.html.TOKEN", ticket.token)
       formParams add new BasicNameValuePair("leftTicketStr", ticket.leftTiketToken)
       formParams add new BasicNameValuePair("textfield", "中文或拼音首字母")
@@ -195,23 +195,25 @@ class CommitActor extends Actor with ActorLogging {
       formParams add new BasicNameValuePair("orderRequest.to_station_name", ticket.toName)
       formParams add new BasicNameValuePair("orderRequest.cancel_flag", "1")
       formParams add new BasicNameValuePair("orderRequest.id_mode", "Y")
-      formParams add new BasicNameValuePair("passengerTickets", ticketInfo)
-      formParams add new BasicNameValuePair("oldPassengers", "")
-      formParams add new BasicNameValuePair("passenger_1_seat", ticket.seat)
-      formParams add new BasicNameValuePair("passenger_1_ticket", "1")
-      formParams add new BasicNameValuePair("passenger_1_name", ticket.passengerName)
-      formParams add new BasicNameValuePair("passenger_1_cardtype", "1")
-      formParams add new BasicNameValuePair("passenger_1_cardno", ticket.passengerId)
-      formParams add new BasicNameValuePair("passenger_1_mobileno", ticket.passengerPhone)
-      formParams add new BasicNameValuePair("checkbox9", "Y")
-      formParams add new BasicNameValuePair("oldPassengers", "")
-      formParams add new BasicNameValuePair("checkbox9", "Y")
-      formParams add new BasicNameValuePair("oldPassengers", "")
-      formParams add new BasicNameValuePair("checkbox9", "Y")
-      formParams add new BasicNameValuePair("oldPassengers", "")
-      formParams add new BasicNameValuePair("checkbox9", "Y")
-      formParams add new BasicNameValuePair("oldPassengers", "")
-      formParams add new BasicNameValuePair("checkbox9", "Y")
+
+      var i = 1
+      for (passenger <- ticket.passengers) {
+        val ticketInfo = passenger.seat + ",0,1," + passenger.name + ",1," +
+          passenger.id + "," + passenger.phone + ",N"
+        formParams add new BasicNameValuePair("passengerTickets", ticketInfo)
+        formParams add new BasicNameValuePair("oldPassengers", "")
+        formParams add new BasicNameValuePair("passenger_%d_seat" format i, passenger.seat)
+        formParams add new BasicNameValuePair("passenger_%d_ticket" format i, "1")
+        formParams add new BasicNameValuePair("passenger_%d_name" format i, passenger.name)
+        formParams add new BasicNameValuePair("passenger_%d_cardtype" format i, "1")
+        formParams add new BasicNameValuePair("passenger_%d_cardno" format i, passenger.id)
+        formParams add new BasicNameValuePair("passenger_%d_mobileno" format i, passenger.phone)
+        i += 1
+      }
+      for (i <- 1 to (5 - ticket.passengers.length)) {
+        formParams add new BasicNameValuePair("oldPassengers", "")
+        formParams add new BasicNameValuePair("checkbox9", "Y")
+      }
       formParams add new BasicNameValuePair("randCode", code)
       formParams add new BasicNameValuePair("orderRequest.reserve_flag", "A")
       val entity = new UrlEncodedFormEntity(formParams, "UTF-8")

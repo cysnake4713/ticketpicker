@@ -1,18 +1,31 @@
-<tickets>
+﻿<tickets>
     <ticket>
-        <from>SZQ</from>
-        <to>GZQ</to>
-        <train>D7136</train>
-        <date>2013-02-08</date>
+        <from>广州</from>
+        <to>深圳</to>
+        <train>G6205</train>
+        <date>2013-02-07</date>
         <time>00:00--24:00</time>
-        <seat>8</seat>
         <!--<seat>1</seat> 硬座  -->
+		<!--<seat>3 硬卧-->
+		<!--<seat>4 软卧-->
         <!--<seat>8</seat> 二等软座  -->
+		<!--<seat>o</seat> 高铁二等座
+		<option value="M" selected="">高铁一等座</option>
+		<option value="P">高铁特等座</option>
+		  -->
         <passenger>
+			<seat>O</seat>
             <name>渎圣</name>
             <id>110101197804035778</id>
             <phone>18655326598</phone>
         </passenger>
-
+		<!--
+		<passenger>
+		    <seat>O</seat>
+			<name>他是否</name>
+			<id>11010119800101445X</id>
+			<phone>18655326598</phone>
+		</passenger>
+		-->
     </ticket>
 </tickets>

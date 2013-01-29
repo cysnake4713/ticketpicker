@@ -18,14 +18,13 @@ class TicketPO {
   var time: String = ""
   var token: String = ""
   var leftTiketToken: String = ""
-  var seat: String = ""
   var startTime: String = ""
   var endTime: String = ""
-  var passengerName: String = ""
-  var passengerId: String = ""
-  var passengerPhone: String = ""
+  val passengers = scala.collection.mutable.MutableList.empty[PassengerPO]
   var searchFromCode = ""
   var searchToCode = ""
   var searchFromName = ""
   var searchToName = ""
+
+  override def toString: String = "from:%s to:%s passengers:%s" format(searchFromName, searchToName, passengers)
 }
